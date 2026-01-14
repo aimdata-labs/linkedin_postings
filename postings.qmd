@@ -1,0 +1,459 @@
+---
+title: "Linkedin postings"
+subtitle: "Part one"
+author: "Sean Ng"
+organization: "AIMdata"
+date-modified: "11 January 2026"
+execute: 
+  echo: false
+---
+
+
+```{r setup, include = FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 9)
+
+
+library(tidyverse)
+library(here)
+library(janitor)
+library(scales)
+library(tidytext)
+library(widyr)
+library(ggraph)
+library(patchwork)
+library(kableExtra)
+library(viridis)
+library(DT)
+library(skimr)
+library(jsonlite)
+library(jsonld)
+
+`%out%` <- Negate(`%in%`)
+options(scipen = 100)
+theme_set(theme_light())
+range_wna <- function(x){(x-min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))}
+
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+```
+
+```{r data}
+
+industries <- read_csv("./data/companies/company_industries.csv") |> 
+  mutate(industry_simple = 
+           case_when(
+             industry %in% c("Staffing and Recruiting", 
+                             "Human Resources Services") ~ 
+               "Recruiting", 
+             industry %in% c("Farming", "Fisheries") ~ "Food Production", 
+             industry %in% c("Business Consulting and Services", 
+                             "Research Services", 
+                             "Professional Training and Coaching", 
+                             "Outsourcing and Offshoring Consulting",
+                             "Government Relations Services", 
+                             "Market Research", 
+                             "Strategic Management Services", 
+                             "Executive Offices", 
+                             "Design Services") ~ 
+               "Business Consulting", 
+             industry %in% c("Public Relations and Communications Services", 
+                             "Events Services", 
+                             "Printing Services", 
+                             "Graphic Design") ~ 
+               "Communications and Events", 
+             industry %in% c("IT Services and IT Consulting", 
+                             "Software Development", 
+                             "Computer and Network Security", 
+                             "Technology, Information and Internet", 
+                             "Information Services", 
+                             "Computer Games", 
+                             "Computer Networking Products", 
+                             "Mobile Gaming Apps") ~ 
+               "IT", 
+             industry %in% c("Financial Services", 
+                             "Banking", 
+                             "Venture Capital and Private Equity Principals", 
+                             "Investment Banking", 
+                             "Investment Management", 
+                             "Accounting") ~ 
+               "Financial Services",  
+             industry %in% c("Construction", 
+                             "Wholesale Building Materials", 
+                             "Civil Engineering", 
+                             "Architecture and Planning") ~ 
+               "Construction", 
+             industry == "Advertising Services" ~ "Advertising", 
+             industry %in% c("Non-profit Organizations", 
+                            "Civic and Social Organizations", 
+                            "Religious Institutions", 
+                            "International Trade and Development", 
+                            "Political Organizations", 
+                            "Fundraising", 
+                            "International Affairs", 
+                            "Think Tanks", 
+                            "Philanthropic Fundraising Services", 
+                            "Public Policy Offices") ~ 
+               "Civil Society", 
+             industry %in% c("Real Estate", 
+                             "Facilities Services", 
+                             "Environmental Services", 
+                             "Recreational Facilities", 
+                             "Leasing Non-residential Real Estate") ~ 
+               "Real Estate", 
+             industry == "Insurance" ~ "Insurance", 
+             industry %in% c("Law Practice", 
+                             "Legal Services", 
+                             "Administration of Justice", 
+                             "Alternative Dispute Resolution") ~ 
+               "Legal", 
+             industry %in%  c("Higher Education", 
+                              "Education Administration Programs", 
+                              "Primary and Secondary Education", 
+                              "E-Learning Providers") ~ 
+               "Education", 
+             industry %in% c("Government Administration", 
+                             "Legislative Offices", 
+                             "Individual and Family Services") ~ 
+               "Government Administration",
+             industry %in% c("Biotechnology Research", 
+                             "Pharmaceuticals Manufacturing", 
+                             "Nanotechnology Research") ~ 
+               "Pharmaceuticals and Biotech", 
+             industry %in% c("Food and Beverage Services", 
+                             "Restaurants", 
+                             "Beverage Manufacturing", 
+                             "Dairy Product Manufacturing") ~ 
+               "F&B", 
+             industry %in% c("Mental Health Care",  
+                             "Hospitals and Health Care", 
+                             "Medical Practices")
+             ~ "Healthcare", 
+             industry %in% c("Medical Equipment Manufacturing", 
+                             "Industrial Machinery Manufacturing", 
+                             "Appliances, Electrical, and Electronics Manufacturing", 
+                             "Food and Beverage Manufacturing",
+                             "Pharmaceutical Manufacturing", 
+                             "Defense and Space Manufacturing", 
+                             "Chemical Manufacturing", 
+                             "Motor Vehicle Manufacturing", 
+                             "Renewable Energy Semiconductor Manufacturing", 
+                             "Aviation and Aerospace Component Manufacturing", 
+                             "Automation Machinery Manufacturing", 
+                             "Packaging and Containers Manufacturing", 
+                             "Semiconductor Manufacturing", 
+                             "Personal Care Product Manufacturing", 
+                             "Computers and Electronics Manufacturing", 
+                             "Plastics Manufacturing", 
+                             "Furniture and Home Furnishings Manufacturing", 
+                             "Paper and Forest Product Manufacturing", 
+                             "Textile Manufacturing",
+                             "Computer Hardware Manufacturing", 
+                             "Sporting Goods Manufacturing", 
+                             "Glass, Ceramics and Concrete Manufacturing", 
+                             "Railroad Equipment Manufacturing", 
+                             "Shipbuilding", 
+                             "Tobacco Manufacturing", 
+                             "Machinery Manufacturing", 
+                             "Manufacturing")  ~ 
+               "Manufacturing", 
+             industry %in% c("Oil and Gas", 
+                             "Mining") ~ 
+               "Natural Resources", 
+             industry %in% c("Utilities", 
+                             "Telecommunications", 
+                             "Wireless Services") ~ 
+               "Telecoms and Utilities", 
+             industry %in% c("Entertainment Providers", 
+                             "Spectator Sports", 
+                             "Broadcast Media Production and Distribution", 
+                             "Media Production", 
+                             "Book and Periodical Publishing",
+                             "Gambling Facilities and Casinos", 
+                             "Museums, Historical Sites, and Zoos", 
+                             "Online Audio and Video Media", 
+                             "Musicians", 
+                             "Performing Arts", 
+                             "Translation and Localization", 
+                             "Newspaper Publishing", 
+                             "Artists and Writers", 
+                             "Libraries", 
+                             "Photography",
+                             "Animation and Post-production", 
+                             "Writing and Editing") ~ 
+               "Entertainment", 
+             # Tell me it's not true
+             industry %in% c("Airlines and Aviation", 
+                             "Transportation, Logistics, Supply Chain and Storage", 
+                             "Freight and Package Transportation", 
+                             "Maritime Transportation", 
+                             "Warehousing and Storage", 
+                             "Truck Transportation") ~ 
+               "Transportation and Logistics", 
+             industry %in% c("Retail", 
+                             "Retail Apparel and Fashion", 
+                             "Consumer Services", 
+                             "Retail Luxury Goods and Jewelry", 
+                             # Maybe contentious, but Costco is a retailer
+                             "Wholesale", 
+                             "Retail Office Equipment",
+                             "Retail Groceries", 
+                             "Wholesale Import and Export") ~ 
+               "Retail and Sales", 
+             industry %in% c("Security and Investigations", 
+                             "Public Safety", 
+                             "Law Enforcement", 
+                             "Armed Forces") ~ "Security", 
+             industry %in% c("Travel Arrangements", 
+                             "Hospitality") ~ 
+               "Travel",
+             industry %in% c("Veterinary Services", 
+                             "Alternative Medicine", 
+                             "Wellness and Fitness Services") ~ "Wellness"
+           )) |> 
+  # Just dropping all the extras
+  group_by(company_id) |> 
+  slice_head(n = 1) |> 
+  ungroup()
+
+job_category_cleaning <- function(tbl){
+  tbl |>  
+    mutate(
+      job_category = 
+        case_when(
+          str_detect(title, "Trainee|Intern|Paralegal|Entry Level|Support|Teller|ENTRY LEVEL|Accounting Clerk|Graduate Program|Universal Banker|Data Entry Clerk") ~ 
+                    "Entry Level",
+          str_detect(title,
+                     "Manager|MANAGER|Superintendent|Supervisor|Lead|Product Owner|Scrum Master|Cloud Architect|Sous Chef")  & !str_detect(title, "Chief")
+                  ~ "Manager", 
+                  str_detect(title, "Officer|Social Worker|Teacher|TEACHER|teacher") & !str_detect(title, "Chief") ~ 
+                    "Officer", 
+                  str_detect(title, "Engineer|Developer|Quality Inspector|Quality Control Inspector|Construction Inspector") ~ 
+                    "Engineer", 
+                  str_detect(title, "Technician|Detailer|Mechanic|Forklift Operator|Electrician|Machinist|Equipment Operator|Carpenter|Assembler|Operator|Medical Biller|Hair Stylist|Coordinator|Dispatcher| Tech") ~ 
+                    "Technician", 
+                  str_detect(
+                    title, 
+                    "Specialist|Technologist|Controller|Phlebotomist|Scientist|Pathologist|Estimator|Data Architect|System Administrator|Systems Administrator|Database Administrator|Planner|Java   Architect|Network Administrator|Salesforce Administrator") ~ 
+                    "Specialist", 
+                  str_detect(title, "Analyst|Data Modeler") ~ "Analyst",
+                  str_detect(title, "Cook|Driver|Housekeeper|Cashier|Dishwasher|Server|Bartender|Warehouse Worker|Janitor|Groomer|Food Service Worker|Welder|Custodian|Laborer|Dashers|Housekeeping   Aide|Barista|In-Store Shopper|Handler|Stocker|Drive with DoorDash|Caregiver|Warehouse Part Time Overnight|Cleaner|Warehouse Part Time Days|Restaurant Delivery|Warehouse Order Selector|Groundskeeper|Keyholder|Porter|Valet|store driver|Concierge|Room Attendant") ~ 
+                    "Labourer", 
+                  str_detect(title, "Consultant|Advisor") ~ 
+                    "Consultant", 
+                  str_detect(title, "Chief|Director|Business Owner|Co-Founder|Executive|Vice President|Head") &
+            ! str_detect(title, "Sales") ~ 
+                    "Director",
+                  str_detect(title, 
+                             "Assistant|Receptionist|Retail Sales – Part Time|Front Desk Agent|ASSISTANT|Aide|Office Administrator|Contract Administrator|Legal Secretary|Branch Office Administrator|Payroll Administrator") ~ "Assistant",
+                  # Not sure about "Buyer"
+                  str_detect(
+                    title, "Associate|Salesperson|Team Member|Generalist|Merchandiser|Human Resources   Business Partner|Buyer|Relationship Banker|salesperson|Retail Parts Pro|ASSOCIATE|Sales Agent|Sales Professional|Sleep Expert - Sales|Representative|REPRESENTATIVE| Rep|Personal Trainer|PROMOTIONS AND SALES POSITIONS|Insurance Agent|Personal Banker|Recruiter") ~ 
+                    "Associate",
+                  str_detect(title, 
+                             "Attorney|Nurse|Therapist|Dental Hygienist|Architect|Licensed Clinical Social Worker|Physician|Nurse|NURSE|RN|Registered Dietitian|Chemist|Dentist|OCCUPATIONAL THERAPIST|Licensed Mental Health Counselor|Pharmacist|Psychiatrist|Veterinarian|Accountant|Bookkeeper|Auditor") ~ 
+                    "Licensed Professional",
+                  str_detect(title, "Writer|writer|Content Editor|Designer") ~ "Creative",
+                  TRUE ~ "Other"
+                  )) |> 
+    mutate(senior = ifelse(str_detect(title, "Senior"), 
+                           "senior", 
+                           "not senior")) 
+}
+
+
+postings_clean <- read_csv("./raw_data/postings.csv") |>
+  filter(!is.na(company_id)) |> 
+  left_join(
+    industries,
+    by = "company_id"
+  ) |> 
+  filter(!is.na(industry)) |> 
+  filter(!is.na(company_name) & company_name != "Confidential") |> 
+  # Likely typos since there's entry-level and associates
+  # Fine to drop them since it's less than 10 entries
+  filter(normalized_salary < 1000000 | is.na(normalized_salary)) |> 
+  job_category_cleaning()
+```
+
+I think let's ignore all staffing and recruiting postings. 
+
+
+
+```{r}
+postings_clean |> 
+  filter(industry_simple == "IT") |> 
+  group_by(industry) |> 
+  summarise(postings = n_distinct(job_id), 
+            companies = n_distinct(company_id)) |> 
+  ggplot(aes(x = postings, 
+             y = fct_reorder(industry, postings))) +
+  geom_col(aes(fill = companies))
+
+```
+## By industry
+
+```{r}
+postings_clean |> 
+  filter(industry_simple != "Recruiting") |> 
+  group_by(industry_simple) |> 
+  summarise(postings = n_distinct(job_id), 
+            companies = n_distinct(company_id)) |> 
+  ggplot(aes(x = postings, 
+             y = fct_reorder(industry_simple, postings))) +
+  geom_col(aes(fill = companies)) + 
+  scale_x_continuous(labels = comma) +
+  scale_fill_viridis(direction = -1, option = "cividis") +
+  labs(title = "LinkedIn job postings in 2023-2024, by industry", 
+       subtitle = "Excludes postings by recruiters and middlemen", 
+       y = "")
+```
+
+Manager, Officer, Associate, Engineer, Coordinator, Representative, Accountant, Assistant, Executive
+
+Payscale by job category?
+
+
+We can at least tell that our 
+
+```{r}
+postings_clean |> 
+  filter(normalized_salary > 1000 | is.na(normalized_salary)) |> 
+  group_by(job_category) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = mean(normalized_salary, na.rm = TRUE), 
+            min_salary = min(normalized_salary, na.rm = TRUE), 
+            max_salary = max(normalized_salary, na.rm = TRUE)) |> 
+  arrange(desc(salary))
+```
+
+
+```{r}
+postings_clean |>
+  # Not sure this is the right filter
+  # We can play around with it
+  filter(normalized_salary > 1000 | is.na(normalized_salary)) |> 
+  group_by(job_category) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = mean(normalized_salary, na.rm = TRUE)) |> 
+  ggplot(aes(x = n, 
+             y = fct_reorder(job_category, n))) + 
+  geom_col(aes(fill = salary)) +
+  geom_text(aes(label = comma(salary)), 
+            hjust = "inward") +
+  scale_fill_viridis(direction = -1, labels = comma) + 
+  scale_x_continuous(labels = comma) + 
+  labs(x = "Number of postings", 
+       y = "", 
+       title = "Mean salary by job category", 
+       fill = "Mean\nSalary")
+
+```
+
+```{r}
+postings_clean |>
+  # Not sure this is the right filter
+  # We can play around with it
+  filter(normalized_salary > 1000 | is.na(normalized_salary)) |> 
+  group_by(job_category) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = mean(normalized_salary, na.rm = TRUE)) |> 
+  arrange(desc(salary))
+```
+
+<br>
+
+```{r}
+postings_clean |> 
+  filter(industry_simple != "Recruiting") |> 
+  group_by(job_category, industry_simple) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = mean(normalized_salary, na.rm = TRUE)) |> 
+  group_by(industry_simple) |> 
+  mutate(pc = n / sum(n),
+         sort = sum(n[job_category %in% c(
+           "Director", "Engineer", "Licensed Professional", "Manager")]) / 
+           sum(n)) |> 
+  ungroup() |> 
+  mutate(job_category = fct_relevel(
+    job_category, c("Director", "Engineer", "Licensed Professional", 
+                    "Manager", "Consultant", "Creative", 
+                    "Analyst", "Other", "Specialist", 
+                    "Officer", "Associate", "Entry Level", 
+                    "Technician", "Assistant", "Labourer")
+  )) |> 
+  arrange(desc(job_category)) |> 
+  ggplot(aes(x = pc, y = fct_reorder(industry_simple, sort), 
+             group = job_category)) + 
+  geom_col(aes(fill = job_category)) + 
+  scale_fill_viridis_d(option = "turbo") + 
+  scale_x_continuous(labels = percent) +
+  labs(title = "Breakdown of job postings by industry", 
+       subtitle = "Sorted by percentage of 'good jobs'", 
+       x = "", y = "", 
+       fill = "") + 
+  theme(legend.text = element_text(size = 9))
+```
+
+<br>
+
+Education is dying (perhaps as a backlash towards its intensive monetisation and the purposeful destruction of the teaching profession), so is the legal industry, as well as government administration, which I can attest to have been in a state of atrophy even before DOGE and the great sack of the American government. These industries have an even worse proportion of good jobs than the oft-memed about Travel industry. 
+
+We should probably cross-reference this with data scraped from Indeed, but the only available dataset is only a marketing sample of 30,000 jobs. 
+
+<br>
+
+
+```{r}
+postings_clean |> 
+  filter(industry_simple == "Communications and Events") |> 
+  group_by(industry, job_category) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = mean(normalized_salary, na.rm = TRUE))
+```
+
+
+
+
+
+```{r}
+postings_clean |>
+  job_category_cleaning() |> 
+  filter(job_category == "Manager") |> 
+  count(title, sort = TRUE)
+  filter(is.na(job_category)) |> 
+  arrange(desc(n))
+```
+
+```{r}
+postings_clean |> 
+  job_category_cleaning() |> 
+  filter(normalized_salary < 500000 ) |> 
+  ggplot(aes(x = normalized_salary)) + 
+  geom_histogram() 
+  select(title, max_salary, med_salary, min_salary, pay_period, normalized_salary)
+```
+
+<br>
+
+53% of LinkedIn users earn more than USD 100,000 a year. 54% of college graduates use LinkedIn. 
+
+https://blog.hootsuite.com/linkedin-demographics/#:~:text=What%20the%20data%20tells%20us,makers%20and%20executive%20audiences%20worldwide.
+
+
+## Indeed
+
+```{r}
+indeed <- stream_in(file(("./data/marketing_sample_for_indeed_usa-indeed_usa_job__20210101_20210331__30k_data.ldjson")))
+
+indeed |> glimpse()
+
+indeed |> count(category, sort = TRUE)
+```
+
+
