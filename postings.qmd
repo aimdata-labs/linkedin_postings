@@ -211,7 +211,7 @@ industries <- read_csv("./data/companies/company_industries.csv") |>
                              "Armed Forces") ~ "Security", 
              industry %in% c("Travel Arrangements", 
                              "Hospitality") ~ 
-               "Travel",
+               "Hospitality and Travel",
              industry %in% c("Veterinary Services", 
                              "Alternative Medicine", 
                              "Wellness and Fitness Services") ~ "Wellness"
@@ -221,50 +221,57 @@ industries <- read_csv("./data/companies/company_industries.csv") |>
   slice_head(n = 1) |> 
   ungroup()
 
+
 job_category_cleaning <- function(tbl){
   tbl |>  
     mutate(
       job_category = 
         case_when(
+          str_detect(title, "Chief|Director|Business Owner|Co-Founder|Executive|Vice President|Head") ~ 
+                    "Director",
           str_detect(title, "Trainee|Intern|Paralegal|Entry Level|Support|Teller|ENTRY LEVEL|Accounting Clerk|Graduate Program|Universal Banker|Data Entry Clerk") ~ 
-                    "Entry Level",
+            "Entry Level",
           str_detect(title,
-                     "Manager|MANAGER|Superintendent|Supervisor|Lead|Product Owner|Scrum Master|Cloud Architect|Sous Chef")  & !str_detect(title, "Chief")
-                  ~ "Manager", 
-                  str_detect(title, "Officer|Social Worker|Teacher|TEACHER|teacher") & !str_detect(title, "Chief") ~ 
-                    "Officer", 
-                  str_detect(title, "Engineer|Developer|Quality Inspector|Quality Control Inspector|Construction Inspector") ~ 
-                    "Engineer", 
-                  str_detect(title, "Technician|Detailer|Mechanic|Forklift Operator|Electrician|Machinist|Equipment Operator|Carpenter|Assembler|Operator|Medical Biller|Hair Stylist|Coordinator|Dispatcher| Tech") ~ 
-                    "Technician", 
-                  str_detect(
-                    title, 
+                     "Manager|MANAGER|Superintendent|Supervisor|Lead|Product Owner|Scrum Master|Cloud Architect|Sous Chef|Human Resources Business Partner|HR Business Partner")  & 
+            !str_detect(title, "Chief") ~ 
+            "Manager", 
+          str_detect(title, "Engineer|Developer|Quality Inspector|Quality Control Inspector|Construction Inspector") ~ 
+            "Engineer", 
+          str_detect(title, 
+                     "Attorney|Nurse|Therapist|Dental Hygienist|Architect|Licensed Clinical Social Worker|Physician|Nurse|NURSE|RN|Registered Dietitian|Chemist|Dentist|OCCUPATIONAL THERAPIST|Licensed Mental Health Counselor|Pharmacist|Psychiatrist|Veterinarian|Accountant|Bookkeeper|Auditor|Clinician|Behavior Interventionist|Neurologist|Cardiologist|Optometrist|THERAPIST|Medicine Resident") ~ 
+                    "Licensed Professional",
+          str_detect(title, "Consultant|Advisor") ~ 
+                    "Consultant", 
+          str_detect(title, "Technician|Detailer|Mechanic|Forklift Operator|Electrician|Machinist|Equipment Operator|Carpenter|Assembler|Operator|Medical Biller|Hair Stylist|Coordinator|Dispatcher| Tech|Plumber") ~ 
+                    "Technician",
+          str_detect(title, "Officer|Social Worker|Teacher|TEACHER|teacher|Caseworker") &
+            !str_detect(title, "Chief") ~ 
+                    "Officer",
+          str_detect(title, 
                     "Specialist|Technologist|Controller|Phlebotomist|Scientist|Pathologist|Estimator|Data Architect|System Administrator|Systems Administrator|Database Administrator|Planner|Java   Architect|Network Administrator|Salesforce Administrator") ~ 
                     "Specialist", 
-                  str_detect(title, "Analyst|Data Modeler") ~ "Analyst",
-                  str_detect(title, "Cook|Driver|Housekeeper|Cashier|Dishwasher|Server|Bartender|Warehouse Worker|Janitor|Groomer|Food Service Worker|Welder|Custodian|Laborer|Dashers|Housekeeping   Aide|Barista|In-Store Shopper|Handler|Stocker|Drive with DoorDash|Caregiver|Warehouse Part Time Overnight|Cleaner|Warehouse Part Time Days|Restaurant Delivery|Warehouse Order Selector|Groundskeeper|Keyholder|Porter|Valet|store driver|Concierge|Room Attendant") ~ 
-                    "Labourer", 
-                  str_detect(title, "Consultant|Advisor") ~ 
-                    "Consultant", 
-                  str_detect(title, "Chief|Director|Business Owner|Co-Founder|Executive|Vice President|Head") &
-            ! str_detect(title, "Sales") ~ 
-                    "Director",
-                  str_detect(title, 
-                             "Assistant|Receptionist|Retail Sales – Part Time|Front Desk Agent|ASSISTANT|Aide|Office Administrator|Contract Administrator|Legal Secretary|Branch Office Administrator|Payroll Administrator") ~ "Assistant",
-                  # Not sure about "Buyer"
+                  str_detect(title, "Analyst|Data Modeler") ~ 
+            "Analyst",
+          # Not sure about "Buyer"
                   str_detect(
-                    title, "Associate|Salesperson|Team Member|Generalist|Merchandiser|Human Resources   Business Partner|Buyer|Relationship Banker|salesperson|Retail Parts Pro|ASSOCIATE|Sales Agent|Sales Professional|Sleep Expert - Sales|Representative|REPRESENTATIVE| Rep|Personal Trainer|PROMOTIONS AND SALES POSITIONS|Insurance Agent|Personal Banker|Recruiter") ~ 
-                    "Associate",
+                    title, "Associate|Salesperson|Team Member|Generalist|Merchandiser|Human Resources   Business Partner|Buyer|Relationship Banker|salesperson|Retail Parts Pro|ASSOCIATE|Sales Agent|Sales Professional|Sleep Expert - Sales|Representative|REPRESENTATIVE| Rep|Personal Trainer|PROMOTIONS AND SALES POSITIONS|Insurance Agent|Personal Banker|Recruiter|Store Counter Sales") ~
+            "Associate",
                   str_detect(title, 
-                             "Attorney|Nurse|Therapist|Dental Hygienist|Architect|Licensed Clinical Social Worker|Physician|Nurse|NURSE|RN|Registered Dietitian|Chemist|Dentist|OCCUPATIONAL THERAPIST|Licensed Mental Health Counselor|Pharmacist|Psychiatrist|Veterinarian|Accountant|Bookkeeper|Auditor") ~ 
-                    "Licensed Professional",
-                  str_detect(title, "Writer|writer|Content Editor|Designer") ~ "Creative",
+                             "Assistant|Receptionist|Retail Sales – Part Time|Front Desk Agent|ASSISTANT|Aide|Office Administrator|Contract Administrator|Legal Secretary|Branch Office Administrator|Payroll Administrator|Inventory Control Clerk|Accounts Payable Clerk") ~ 
+            "Assistant",
+                  str_detect(title, "Writer|writer|Content Editor|Designer|Copy Editor|Video Editor") ~ 
+            "Creative",
+          str_detect(title, "Cook|Driver|Housekeeper|Cashier|Dishwasher|Server|Bartender|Warehouse Worker|Janitor|Groomer|Food Service Worker|Welder|Custodian|Laborer|Dashers|Housekeeping   Aide|Barista|In-Store Shopper|Handler|Stocker|Drive with DoorDash|Caregiver|Warehouse Part Time Overnight|Cleaner|Warehouse Part Time Days|Restaurant Delivery|Warehouse Order Selector|Groundskeeper|Keyholder|Porter|Valet|store driver|Concierge|Room Attendant|Attendant|General Labor|Production Worker") ~ 
+                    "Labourer", 
                   TRUE ~ "Other"
                   )) |> 
     mutate(senior = ifelse(str_detect(title, "Senior"), 
                            "senior", 
                            "not senior")) 
 }
+
+# path = kagglehub.dataset_download("arshkon/linkedin-job-postings")
+# https://www.kaggle.com/datasets/arshkon/linkedin-job-postings
 
 
 postings_clean <- read_csv("./raw_data/postings.csv") |>
@@ -285,52 +292,61 @@ I think let's ignore all staffing and recruiting postings.
 
 
 
-```{r}
-postings_clean |> 
-  filter(industry_simple == "IT") |> 
-  group_by(industry) |> 
-  summarise(postings = n_distinct(job_id), 
-            companies = n_distinct(company_id)) |> 
-  ggplot(aes(x = postings, 
-             y = fct_reorder(industry, postings))) +
-  geom_col(aes(fill = companies))
-
-```
 ## By industry
+
+We're looking at another set of scraped data today. This time, over 124,000 LinkedIn job postings over 2023-2024 were scraped by [Arsh Koneru and Zoey Yu Zou](https://www.kaggle.com/datasets/arshkon/linkedin-job-postings). 
+
+Let's start 
 
 ```{r}
 postings_clean |> 
   filter(industry_simple != "Recruiting") |> 
   group_by(industry_simple) |> 
   summarise(postings = n_distinct(job_id), 
-            companies = n_distinct(company_id)) |> 
+            companies = n_distinct(company_id), 
+            salary = mean(normalized_salary, na.rm = TRUE)) |> 
   ggplot(aes(x = postings, 
              y = fct_reorder(industry_simple, postings))) +
   geom_col(aes(fill = companies)) + 
+  geom_text(aes(label = comma(salary)), 
+            hjust = "inward") +
   scale_x_continuous(labels = comma) +
-  scale_fill_viridis(direction = -1, option = "cividis") +
+  scale_fill_viridis(direction = -1, option = "plasma", begin = .3) +
   labs(title = "LinkedIn job postings in 2023-2024, by industry", 
-       subtitle = "Excludes postings by recruiters and middlemen", 
-       y = "")
+       subtitle = "Excludes postings by recruiters and middlemen. Mean salary (USD) at the end of each bar.", 
+       y = "", x = "Number of job postings", 
+       fill = "Number of\ncompanies", 
+       caption = "Source: Arsh Koneru, Zoey Yu Zou and LinkedIn.com")
 ```
 
-Manager, Officer, Associate, Engineer, Coordinator, Representative, Accountant, Assistant, Executive
+<br>
 
-Payscale by job category?
+The IT and Healthcare industries have made the largest number of job postings on LinkedIn. IT and Manufacturing have the 
+
+The IT industry continues to reward its workings comparatively well (to other industries, not to owners) and have more job postings than any other. Even with mass layoffs with the veneer of efficiency and AI, this trend probably continues to the present day. 
+
+But I'm curious about the spread of jobs within each industry: which industries have the highest proportions of good jobs? And what even is a good job? 
+
+<br><br><br>
+
+## Job categories
+
+Let's add a column for job categories to help determine which jobs are good jobs. 
+
+Now, my categorisation is admittedly imperfect, given the large portion of jobs in the "Other" category. But there are diminishing returns to wading through that many layers of corporate obfuscation and doublespeak to determine where each job title should sit. 
+
+But a cursory inspection of this categorisation, plotted below, shows that I have a fair grasp of job titles and what they actually mean. 
 
 
-We can at least tell that our 
 
 ```{r}
 postings_clean |> 
-  filter(normalized_salary > 1000 | is.na(normalized_salary)) |> 
-  group_by(job_category) |> 
-  summarise(n = n_distinct(job_id), 
-            salary = mean(normalized_salary, na.rm = TRUE), 
-            min_salary = min(normalized_salary, na.rm = TRUE), 
-            max_salary = max(normalized_salary, na.rm = TRUE)) |> 
-  arrange(desc(salary))
+  filter(job_category == "Other") |> 
+  count(title, sort = TRUE)
+
+
 ```
+
 
 
 ```{r}
@@ -350,8 +366,10 @@ postings_clean |>
   scale_x_continuous(labels = comma) + 
   labs(x = "Number of postings", 
        y = "", 
-       title = "Mean salary by job category", 
-       fill = "Mean\nSalary")
+       title = "Mean salary (USD) by job category",
+       subtitle = "LinkedIn postings in 2023-2024", 
+       fill = "Mean\nSalary", 
+       caption = "Source: Arsh Koneru, Zoey Yu Zou and LinkedIn.com")
 
 ```
 
@@ -365,6 +383,13 @@ postings_clean |>
             salary = mean(normalized_salary, na.rm = TRUE)) |> 
   arrange(desc(salary))
 ```
+
+Plot by missing salary values or other values
+What are we most blind to?
+Money is the most important motivator. If it were so fun, I would do it for free. 
+
+
+Below, we consider "good jobs" to be Directors, Engineers, Licensed Professionals and Managers, which are also the highest paying, on average.  
 
 <br>
 
@@ -402,11 +427,76 @@ postings_clean |>
 
 <br>
 
+Retail and sales is one of the least top heavy industries. 
+
 Education is dying (perhaps as a backlash towards its intensive monetisation and the purposeful destruction of the teaching profession), so is the legal industry, as well as government administration, which I can attest to have been in a state of atrophy even before DOGE and the great sack of the American government. These industries have an even worse proportion of good jobs than the oft-memed about Travel industry. 
+
+Education is also still surprisingly top-heavy for a dying industry. 
 
 We should probably cross-reference this with data scraped from Indeed, but the only available dataset is only a marketing sample of 30,000 jobs. 
 
+Declining birthrates play a role in declining education. 
+
+Unfortunately, this dataset is not scraped every year, so we can't monitor 
+
 <br>
+
+```{r}
+category_plot <- function(tbl){
+  
+  tbl |> 
+     mutate(job_category = fct_relevel(
+      job_category, c("Director", "Engineer", "Licensed Professional", 
+                      "Manager", "Consultant", "Creative", 
+                      "Analyst", "Other", "Specialist", 
+                      "Officer", "Associate", "Entry Level", 
+                      "Technician", "Assistant", "Labourer")
+    )) |>
+    group_by(industry, job_category) |> 
+    summarise(postings = n_distinct(job_id), 
+              companies = n_distinct(company_id), 
+              .groups = "drop") |> 
+    ggplot(aes(x = postings, 
+               y = fct_reorder(industry, postings), 
+               group = job_category)) +
+    geom_col(aes(fill = job_category)) + 
+    scale_fill_viridis_d(option = "turbo")
+}
+```
+
+
+```{r}
+postings_clean |> 
+  filter(industry_simple == "Recruiting") |> 
+  group_by(company_name) |> 
+  summarise(postings = n_distinct(job_id), 
+            .groups = "drop") |>
+  mutate(industry_postings = sum(postings), 
+         pc = round(postings / industry_postings * 100, 2)) |> 
+  arrange(desc(pc))
+```
+
+```{r}
+postings_clean |> 
+  filter(industry_simple == "Education") |> 
+  category_plot()
+
+
+```
+
+
+<br>
+
+Higher education is your last hope for a good job in the Education industry
+Why there are more postings in Higher Education than Primary and Secondary Education speaks to? 
+Supposedly, there is much more job security and less turnover in Primary and Secondary Education. 
+
+Why are there, proportionally, so many more director-level jobs in Education?
+Is Education too top-heavy? 
+Massive monetisation of education. 
+
+More likely, 
+So maybe, it's more accurate to say that Higher Education (and Private Education) is dying
 
 
 ```{r}
@@ -445,6 +535,76 @@ postings_clean |>
 
 https://blog.hootsuite.com/linkedin-demographics/#:~:text=What%20the%20data%20tells%20us,makers%20and%20executive%20audiences%20worldwide.
 
+## Industry consolidation and oligopolies
+
+We live in trying times. The barrier to entry 
+
+Don't put all your eggs in one basket
+
+<br>
+
+```{r}
+postings_clean |> 
+  filter(industry_simple != "Recruiting" & company_name != "A Hiring Company") |> 
+  group_by(industry_simple, company_id) |> 
+  summarise(postings = n_distinct(job_id), 
+            .groups = "drop") |> 
+  group_by(industry_simple) |> 
+  mutate(industry_postings = sum(postings), 
+         pc = postings / industry_postings) |> 
+  filter(industry_postings > 100) |> 
+  arrange(desc(pc)) |> 
+  slice_head(n = 20) |>
+  mutate(sort = sum(pc)) |> 
+  ungroup() |> 
+  ggplot(aes(x = pc, y = fct_reorder(industry_simple, sort))) + 
+  geom_col(fill = "#adc178") + 
+  scale_x_continuous(labels = percent, breaks = seq(0, .8, .1)) +
+  labs(title = "What is the level of consolidation within industries?", 
+       subtitle = "Industries ranked by the percentage of total jobs posted by the top 20 companies", 
+       x = "", y = "")
+    
+  
+```
+
+<br>
+
+```{r}
+postings_clean |> 
+  filter(industry_simple %in% c("Security", "Telecoms and Utilities", 
+                                "Hospitality and Travel", "F&B", 
+                                "Wellness")) |> 
+  mutate(industry_simple = fct_relevel(industry_simple, 
+                                       c("Security", "Telecoms and Utilities",
+                                         "Hospitality and Travel", "F&B",
+                                         "Wellness"))) |> 
+  group_by(industry_simple, company_name) |> 
+  summarise(postings = n_distinct(job_id), 
+            .groups = "drop") |> 
+  group_by(industry_simple) |> 
+  mutate(industry_postings = sum(postings), 
+         pc = round(postings / industry_postings * 100, 2)) |> 
+  arrange(desc(pc)) |> 
+  slice_head(n = 5) |>
+  ungroup() |>
+  select(-postings, -industry_postings) |> 
+  kable(booktabs = TRUE, 
+        caption = "Percent of postings by the five largest hirers per industry") |> 
+  kable_classic_2("striped")
+  
+```
+
+<br>
+
+Whilst this is no [Herfindahl-Hirschman Index](https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_index#:~:text=HHI%20is%20calculated%20by%20squaring,share%2C%20weighted%20by%20market%20share.) (HHI), 
+
+Though if you were to search up "Herfindahl-Hirschman Index by industry", you will find no relevant recent results. Perhaps of an indications that the oligopolistic tendencies of the corporate overclass have long gone unchecked and unquestioned. 
+
+The last mention of it by the Bureau of Labor Statistics dates back to 2012 (with a report in 2014), and even then, the report never looks at consolidation and overconcentration of jobs within industries. But the position of the US government on oligopolies has long been clear. 
+
+All industries show signs of oligopoly and excess concentration -- even in IT, 20 companies post 20% of all jobs. Notwithstanding the FAANG companies' stranglehold on patents and market capitalisation. 
+ 
+So, what does this mean for you and me? If you were hoping that I would share some insights on how to pull the ladder up behind yourself,  
 
 ## Indeed
 
