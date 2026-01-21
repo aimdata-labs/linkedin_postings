@@ -233,11 +233,11 @@ job_category_cleaning <- function(tbl){
         case_when(
            # I think an Account Executive is part of the managerial class
           str_detect(title,
-                     "Manager|MANAGER|Superintendent|Supervisor|Lead|Product Owner|Scrum Master|Cloud Architect|Sous Chef|Human Resources Business Partner|HR Business Partner|Account Executive")  & 
+                     "Manager|MANAGER|Superintendent|Supervisor|Lead|Product Owner|Scrum Master|Cloud Architect|Sous Chef|Human Resources Business Partner|HR Business Partner|Account Executive|Partnership Executive")  & 
             !str_detect(title, "Chief") ~ 
             "Manager",
           str_detect(title, "Chief|Director|Business Owner|Co-Founder|Executive|Vice President|Head") & 
-            !str_detect(title, "Executive Assistant") ~ 
+            !str_detect(title, "Executive Assistant|Sales Executive") ~ 
                     "Director",
           str_detect(title, "Trainee|Intern|Paralegal|Entry Level|Support|Teller|ENTRY LEVEL|Accounting Clerk|Graduate Program|Universal Banker|Data Entry Clerk") ~ 
             "Entry Level",
@@ -260,7 +260,7 @@ job_category_cleaning <- function(tbl){
             "Analyst",
           # Not sure about "Buyer"
                   str_detect(
-                    title, "Associate|Salesperson|Team Member|Generalist|Merchandiser|Human Resources   Business Partner|Buyer|Relationship Banker|salesperson|Retail Parts Pro|ASSOCIATE|Sales Agent|Sales Professional|Sleep Expert - Sales|Representative|REPRESENTATIVE| Rep|Personal Trainer|PROMOTIONS AND SALES POSITIONS|Insurance Agent|Personal Banker|Recruiter|Store Counter Sales") ~
+                    title, "Associate|Salesperson|Team Member|Generalist|Merchandiser|Human Resources   Business Partner|Buyer|Relationship Banker|salesperson|Retail Parts Pro|ASSOCIATE|Sales Agent|Sales Professional|Sleep Expert - Sales|Representative|REPRESENTATIVE| Rep|Personal Trainer|PROMOTIONS AND SALES POSITIONS|Insurance Agent|Personal Banker|Recruiter|Store Counter Sales|Sales Executive") ~
             "Associate",
                   str_detect(title, 
                              "Assistant|Receptionist|Retail Sales – Part Time|Front Desk Agent|ASSISTANT|Aide|Office Administrator|Contract Administrator|Legal Secretary|Branch Office Administrator|Payroll Administrator|Inventory Control Clerk|Accounts Payable Clerk") ~ 
@@ -279,6 +279,8 @@ job_category_cleaning <- function(tbl){
 # path = kagglehub.dataset_download("arshkon/linkedin-job-postings")
 # https://www.kaggle.com/datasets/arshkon/linkedin-job-postings
 
+# The raw dataset is too big for github
+# But just download it from the link above 
 
 postings_clean <- read_csv("./raw_data/postings.csv") |>
   filter(!is.na(company_id)) |> 
@@ -406,6 +408,10 @@ The rarest category of jobs are Creatives. But, unlike what your parents told yo
 
 ## Which industries have the most good jobs? 
 
+IT and Pharmaceuticals have the highest proportions of jobs posted being good jobs, with more than 50% of jobs posted being for Managers, Licensed Professionals, Engineers and Directors. The industries which are seeking to hire the most Licensed Professionals are, unsurprisingly, the Healthcare and Legal industries. 
+
+As we will look at later, Pharmaceuticals, Entertainment and Advertising have the highest proportion of director/senior-level postings. 
+
 <br>
 
 ```{r}
@@ -441,72 +447,32 @@ postings_clean |>
        x = "", y = "", 
        fill = "") + 
   theme(legend.text = element_text(size = 9))
+
+ggsave(here("plots", "good_jobs.png"), 
+       width = 8, height = 5, units = "in", dpi = 300)
 ```
 
 <br>
 
-Retail and sales is one of the least top heavy industries. 
+Unsurprisingly, Hospitality and Retail and F&B have the highest proportion of low-skilled labourer jobs. And Retail and Sales have the lowest proportions of senior management or director-level jobs. 
 
-Education is dying (perhaps as a backlash towards its intensive monetisation and the purposeful destruction of the teaching profession), so is the legal industry, as well as government administration, which I can attest to have been in a state of atrophy even before DOGE and the great sack of the American government. These industries have an even worse proportion of good jobs than the oft-memed about Travel industry. 
+Education and Government Administration seem to be dying. And given that this data was scraped before DOGE and the great sack of the American government, these industries likely have an even worse proportion of good jobs now. 
 
-Education is also still surprisingly top-heavy for a dying industry. 
-
-We should probably cross-reference this with data scraped from Indeed, but the only available dataset is only a marketing sample of 30,000 jobs. 
-
-Declining birthrates play a role in declining education. 
-
-Unfortunately, this dataset is not scraped every year, so we can't monitor 
-
-Advertising, Entertainment and Pharmaceuticals and Biotech have the highest proportions of directors and executives. In Advertising's case: Creative Director 
-
-If financialisation is the overcommodification 
-Is AI-slopwork and black
+Unfortunately, this dataset is not scraped every year, so we can't monitor changes over time. 
 
 
-<br>
+<br><br><br>
 
-```{r}
-category_plot <- function(tbl){
-  
-  tbl |> 
-     mutate(job_category = fct_relevel(
-      job_category, c("Director", "Engineer", "Licensed Professional", 
-                      "Manager", "Consultant", "Creative", 
-                      "Analyst", "Other", "Specialist", 
-                      "Officer", "Associate", "Entry Level", 
-                      "Technician", "Assistant", "Labourer")
-    )) |>
-    group_by(industry, job_category) |> 
-    summarise(postings = n_distinct(job_id), 
-              companies = n_distinct(company_id), 
-              .groups = "drop") |> 
-    ggplot(aes(x = postings, 
-               y = fct_reorder(industry, postings), 
-               group = job_category)) +
-    geom_col(aes(fill = job_category)) + 
-    scale_fill_viridis_d(option = "turbo")
-}
-```
 
+
+### Job applications
+
+Let's take a look next at the breakdown of job applications.
+
+Almost a quarter of job applications in Hospitality and Civil Society were for the limited director-level roles. Is this because 
 
 
 <br>
-
-Higher education is your last hope for a good job in the Education industry
-Why there are more postings in Higher Education than Primary and Secondary Education speaks to? 
-Supposedly, there is much more job security and less turnover in Primary and Secondary Education. 
-
-Why are there, proportionally, so many more director-level jobs in Education?
-Is Education too top-heavy? 
-Massive monetisation of education. 
-
-More likely, 
-So maybe, it's more accurate to say that Higher Education (and Private Education) is dying
-
-
-
-
-### Applications
 
 ```{r}
 postings_clean |> 
@@ -543,41 +509,112 @@ postings_clean |>
        x = "", y = "", 
        fill = "") + 
   theme(legend.text = element_text(size = 9))
+
+ggsave(here("plots", "applicant_breakdown.png"), 
+       width = 8, height = 5, units = "in", dpi = 300)
 ```
 
 <br>
 
-```{r}
-postings_clean |> 
-  filter(industry_simple == "Advertising" & 
-           job_category == "Engineer") |> 
-  count(title, sort = TRUE)
-```
-
-
 Almost 25% of applications in the Hospitality and Travel industry are for director or c-suite positions. This percentage is also higher than 20% in Civil Society. 
 
+<br>
+
+```{r oversubscribed, fig.width=8}
+
+subscription_prep <- function(tbl){
+  tbl |> 
+    filter(industry_simple != "Recruiting") |> 
+    group_by(job_category, industry_simple) |> 
+    summarise(n = n_distinct(job_id), 
+              salary = mean(normalized_salary, na.rm = TRUE),
+              applies = sum(applies, na.rm = TRUE)) |> 
+    group_by(industry_simple) |> 
+    mutate(postings_pc = n / sum(n),
+           pc_applies = applies / sum(applies)) |> 
+    ungroup() |> 
+    mutate(subscription = n / applies) |> 
+    arrange(subscription)  |> 
+    filter(applies > 0 & n > 10) %>% 
+    # For future reference
+    # {rbind( head(., 15), tail(., 15) )} |> 
+    mutate(combined = paste0(industry_simple, " ", job_category))
+}
+
+subscription_plot <- function(tbl) {
+  tbl |> 
+    ggplot(aes(x = subscription, 
+               y = fct_reorder(combined, -subscription), 
+               group = job_category)) +
+    geom_col(aes(fill = job_category)) + 
+    scale_fill_manual(values = c(
+      "Director" = "#30123BFF", "Engineer" = "#4147ADFF", 
+      "Licensed Professional" = "#4777EFFF", "Manager" = "#39A4FBFF", 
+      "Consultant" = "#1BD0D5FF", "Creative" = "#25ECA7FF", 
+      "Analyst" = "#62FC6BFF", "Other" = "#A2FC3CFF", 
+      "Specialist" = "#D2E935FF", "Officer" = "#F4C73AFF", 
+      "Associate" = "#FE9B2DFF", "Entry Level" = "#F46516FF", 
+      "Technician" = "#DB3A07FF", "Assistant" = "#B21A01FF", 
+      "Labourer" = "#7A0403FF"
+    )) + 
+    labs(x = "Number of jobs per applicant", 
+         y = "", 
+         fill = "") + 
+    theme(legend.position = "none", 
+          axis.text.y = element_text(size = 8), 
+          axis.text.x = element_text(size = 9))
+}
+
+free(p1, side = "l")
+
+postings_clean |> 
+  subscription_prep() |> 
+  head(20) |>
+  subscription_plot() +
+  theme(axis.title.y = element_text(size = 8, hjust=-5)) +
+  
+postings_clean |> 
+  subscription_prep() |> 
+  tail(20) |>
+  subscription_plot() +
+  
+  plot_annotation(title = "Most oversubscribed and undersubscribed job categories", 
+                  subtitle = "X-axis shows number of jobs per applicant. Only showing categories with more than 10 postings.") + 
+  plot_layout(axis_titles = "collect")
+
+ggsave(here("plots", "oversubscribed_undersubscribed.png"), 
+       width = 8, height = 5, units = "in", dpi = 300)
 
 
-### Most inequal industries 
+```
 
-In Pharmaceuticals and IT, more than 70% of the staff budget is dedicated towards Directors, Engineers, Licensed Professionals and Managers. This is somewhat commonsensical as these are highly specialised fields which often require even more training than postgraduate education can sometimes provide. 
+<br> 
 
-Communications and Events and Entertainment, however, do not require the same degree of specialisation. And are particularly top-heavy. 
+The most oversubscribed job categories are Analysts and Engineers, followed by Creatives. This likely speaks to the glut of coders, programmers and mid-range professionals across all industries, as well as the relatively small number of Creative jobs compared to the people who are interested in them. 
+
+The most undersubscribed jobs are Labourers and Officers (across all industries), as well as, Licensed Professionals in Healthcare, Wellness as well as in the Government. As talent and money continue to be funnelled towards IT and Financial Services, there is, perhaps, a lessened desire to pursue strenuous professional certifications when you can just earn more by code or engaging in market manipulation. 
+
+<br><br><br>
+
+### Most top-heavy industries 
+
+True inequality exists in the gulf between capital and workers, but that's not what LinkedIn is about, it's just a symptom of the disease.  
+
+Nevertheless, at the risk of undermining worker solidarity, let us look at how staffing budgets are broken down between different job categories. 
+
+In the plot below, we have pro-rated the mean salary per job category per industry by the number of postings. 
+
+Advertising, Pharmaceuticals and Biotech and Communications and Events pay out more than 25% of salaries just to their directors. We'll take a closer look below, since we're all probably getting Theranos flashbacks.
+
+In Pharmaceuticals and IT, around 70% of the staff budget is dedicated towards Directors, Engineers, Licensed Professionals and Managers. At first, this seems commonsensical, since these are specialised fields that sometimes require more training and expertise than postgraduate education can sometimes provide. 
+
+But looking a little deeper, we see that in Advertising, Pharmaceuticals and Entertainment, around 1/4 of all salaries from jobs posted were just for senior management. We'll explore this in a bit more detail, since we're likely getting some Theranos flashbacks. 
 
 Government administration and Education are much more egalitarian, though not as lucrative. 
 
-Advertising, Pharmaceuticals and Biotech and Communications and Events pay out more than 25% of salaries just to their directors, giving me Theranos flashbacks. Entertainment is very nearly there as well. 
+<br>
 
-This problem will likely continue as ballooning executive pay packages (Elon Musk insisting that shareholders owe him USD 1 trillion) and a managerial class that is not interested in shareholder needs. 
-
-Summary of [this thread](https://www.reddit.com/r/Economics/comments/1fcl6xl/when_the_mismanagerial_class_destroys_great/)
-
-the financialization of economy, with all businesses regarded by those who manage them — and create the regulatory frameworks within which they operate — simply as vehicles for generating profit.
-
-the rise of a managerial class that is trained in a generalism often rooted in highly esoteric theories, mainly designed to hide that the fact that it lacks either depth or rigorous and repeatable scientific principles
-
-```{r}
+```{r top-heavy}
 postings_clean |> 
   filter(industry_simple != "Recruiting") |> 
   group_by(job_category, industry_simple) |> 
@@ -612,71 +649,50 @@ postings_clean |>
        x = "", y = "", 
        fill = "") + 
   theme(legend.text = element_text(size = 9))
-```
 
-
-### Case study
-
-```{r}
-postings_clean |> 
-  filter()
-```
-
-
-
-```{r}
-postings_clean |>
-  job_category_cleaning() |> 
-  filter(job_category == "Manager") |> 
-  count(title, sort = TRUE)
-  filter(is.na(job_category)) |> 
-  arrange(desc(n))
-```
-
-```{r}
-postings_clean |> 
-  job_category_cleaning() |> 
-  filter(normalized_salary < 500000 ) |> 
-  ggplot(aes(x = normalized_salary)) + 
-  geom_histogram() 
-  select(title, max_salary, med_salary, min_salary, pay_period, normalized_salary)
+ggsave(here("plots", "top_heavy.png"), 
+       width = 8, height = 5, units = "in", dpi = 300)
 ```
 
 <br>
 
-53% of LinkedIn users earn more than USD 100,000 a year. 54% of college graduates use LinkedIn. 
+Taking a closer look at Pharmaceuticals and Advertising, we can see a pattern that I first noticed in Civil Society. In what I have termed Bifurcated Industries or Bifurcated Companies, we see that some of the top-heaviness comes from leadership in these industries needing to govern two or more complex functions. 
 
-https://blog.hootsuite.com/linkedin-demographics/#:~:text=What%20the%20data%20tells%20us,makers%20and%20executive%20audiences%20worldwide.
+In the case of Civil Society, you need directors for field operations and fundraising ("development", as in business development). In Advertising, you need account directors and creative directors. And in Pharmaceuticals, you have research, manufacturing and sales. 
 
-### A note on Enshittification 
+As to which of these is the core purpose of these companies, from experience, I'd say that revenue generation always wins. And through gradual erosion, the revenue-generating functions will eventually corrupt and override your core purpose. 
 
-How much exists in the world of numbers and the world of humans? 
-
-If financialisation is the the [increasing role](https://www.tni.org/en/publication/financialisation-a-primer) of financial motives, markets, actors and insitutions, resulting in "financial intermediaries and technologies [gaining] an unprecedented influence over our lives", the perhaps enshittification is process by which AIs, algorithms, perverse indicators, gamification and over-optimisation (corner cutting) have reduced and cheapened our lives. 
-
-Perhaps a key concept here is marginality or iteration, as in incremental gains from 
-
-One clear example of this is just how many Software Engineers are hired in Advertising. 
-
-financial intermediaries and technologies have gained unprecedented influence over our daily lives
-
-financialization means the increasing role of financial motives, financial markets, financial actors and financial institutions in the operation of the domestic and international economies
+<br>
 
 ```{r}
 postings_clean |> 
-  filter(str_detect(title, "ML")) |> 
-  count(title, sort = TRUE)
+  filter(job_category == "Director" & 
+           industry_simple %in% c("Pharmaceuticals and Biotech", 
+                                  "Advertising", 
+                                  "Civil Society")) |> 
+  group_by(industry_simple) |> 
+  count(title, sort = TRUE) |> 
+  group_by(industry_simple2 = industry_simple) |> 
+  group_map(~head(.x, 15)) %>%
+  bind_rows() |> 
+  select(-n) |>
+  pivot_wider(names_from = "industry_simple", 
+              values_from = "title") |> 
+  unnest() |> 
+  select(Advertising, `Pharmaceuticals and Biotech`, `Civil Society`) |> 
+  kable(booktabs = TRUE, 
+        caption = "Most common management titles in bifurcated industries") |> 
+  kable_classic_2("striped")
 
-postings_clean |> 
-  filter(industry_simple == "IT") |> 
-  count(title, sort = TRUE)
 ```
 
-```{r}
-str_detect(title, "Software|Data|Network|UI|DevOps|Full Stack|System|Cloud|Application|Site Reliability|Machine Learning|Cyber|Developer|Java|Security Engineer|Database|Data Architect|Modeler|Datacenter|Data Center|BI|Azure|Databricks|UI|UX|Python|Solution|Dotnet|Online|Product Owner|Scrum|Automation|Oracle|User|Validation|Salesforce|Mule|Desktop|Android|Information Security|Information Technology|Information System|Digital|Digital Adoption|Adoption|Agile|Frontend|Business Analyst|Technical Lead|AI|Artificial Intelligence|Quality Assurance Engineer|Mainframe|ServiceNow|Enterprise Architect|Generative|ML") & 
-  !str_detect(title, "TRAINING|AIDE|QUAIL|MAINTENANCE|CHAPLAIN|AML|MLT")
-```
 
+<br>
+
+I would like to go into further detail, but one of the limitations of the dataset is that LinkedIn is not the entire job market. It likely only represents a select portion of it: [53% of LinkedIn users](https://blog.hootsuite.com/linkedin-demographics/#:~:text=What%20the%20data%20tells%20us,makers%20and%20executive%20audiences%20worldwide.) earn more than USD 100,000 a year. Additionally, the ratio of CEO pay to worker pay has already been documented by the [AFL-CIO](https://aflcio.org/paywatch/company-pay-ratios). 
+
+
+<br><br><br>
 
 ## Industry consolidation and oligopolies
 
@@ -754,10 +770,38 @@ So, what does this mean for you and me? If you were hoping that I would share so
 
 
 
+
+### A note on Enshittification 
+
+How much exists in the world of numbers and the world of humans? 
+
+If financialisation is the the [increasing role](https://www.tni.org/en/publication/financialisation-a-primer) of financial motives, markets, actors and institutions, resulting in "financial intermediaries and technologies [gaining] an unprecedented influence over our lives", the perhaps enshittification is process by which AIs, algorithms, perverse indicators, gamification and over-optimisation (corner cutting) have reduced and cheapened our lives, resulting in a greater and greater divorce from reality. 
+
+Perhaps a key concept here is marginality or iteration, as in incremental gains from 
+
+One clear example of this is just how many Software Engineers are hired in Advertising. 
+
+financial intermediaries and technologies have gained unprecedented influence over our daily lives
+
+financialization means the increasing role of financial motives, financial markets, financial actors and financial institutions in the operation of the domestic and international economies
+
 ```{r}
 postings_clean |> 
-  glimpse()
+  filter(str_detect(title, "ML")) |> 
+  count(title, sort = TRUE)
+
+postings_clean |> 
+  filter(industry_simple == "IT") |> 
+  count(title, sort = TRUE)
 ```
+
+```{r}
+str_detect(title, "Software|Data|Network|UI|DevOps|Full Stack|System|Cloud|Application|Site Reliability|Machine Learning|Cyber|Developer|Java|Security Engineer|Database|Data Architect|Modeler|Datacenter|Data Center|BI|Azure|Databricks|UI|UX|Python|Solution|Dotnet|Online|Product Owner|Scrum|Automation|Oracle|User|Validation|Salesforce|Mule|Desktop|Android|Information Security|Information Technology|Information System|Digital|Digital Adoption|Adoption|Agile|Frontend|Business Analyst|Technical Lead|AI|Artificial Intelligence|Quality Assurance Engineer|Mainframe|ServiceNow|Enterprise Architect|Generative|ML") & 
+  !str_detect(title, "TRAINING|AIDE|QUAIL|MAINTENANCE|CHAPLAIN|AML|MLT")
+```
+
+
+
 
 
 
@@ -773,3 +817,93 @@ indeed |> count(category, sort = TRUE)
 
 
 Contrary to the popular and misguided belief that government workers are parasites, government administration is not only a very small portion of job postings, but neither are their workers particularly well-compensated. 
+
+We should probably cross-reference this with data scraped from Indeed, but the only available dataset is only a marketing sample of 30,000 jobs. 
+
+Declining birthrates play a role in declining education. 
+
+
+
+Advertising, Entertainment and Pharmaceuticals and Biotech have the highest proportions of directors and executives. In Advertising's case: Creative Director 
+
+If financialisation is the overcommodification 
+Is AI-slopwork and black
+
+```{r}
+category_plot <- function(tbl){
+  
+  tbl |> 
+     mutate(job_category = fct_relevel(
+      job_category, c("Director", "Engineer", "Licensed Professional", 
+                      "Manager", "Consultant", "Creative", 
+                      "Analyst", "Other", "Specialist", 
+                      "Officer", "Associate", "Entry Level", 
+                      "Technician", "Assistant", "Labourer")
+    )) |>
+    group_by(industry, job_category) |> 
+    summarise(postings = n_distinct(job_id), 
+              companies = n_distinct(company_id), 
+              .groups = "drop") |> 
+    ggplot(aes(x = postings, 
+               y = fct_reorder(industry, postings), 
+               group = job_category)) +
+    geom_col(aes(fill = job_category)) + 
+    scale_fill_viridis_d(option = "turbo")
+}
+```
+
+
+
+<br>
+
+Higher education is your last hope for a good job in the Education industry
+Why there are more postings in Higher Education than Primary and Secondary Education speaks to? 
+Supposedly, there is much more job security and less turnover in Primary and Secondary Education. 
+
+Why are there, proportionally, so many more director-level jobs in Education?
+Is Education too top-heavy? 
+Massive monetisation of education. 
+
+More likely, 
+So maybe, it's more accurate to say that Higher Education (and Private Education) is dying
+
+This problem will likely continue as ballooning executive pay packages (Elon Musk insisting that shareholders owe him USD 1 trillion) and a managerial class that is not interested in shareholder needs. 
+
+Summary of [this thread](https://www.reddit.com/r/Economics/comments/1fcl6xl/when_the_mismanagerial_class_destroys_great/)
+
+the financialization of economy, with all businesses regarded by those who manage them — and create the regulatory frameworks within which they operate — simply as vehicles for generating profit.
+
+the rise of a managerial class that is trained in a generalism often rooted in highly esoteric theories, mainly designed to hide that the fact that it lacks either depth or rigorous and repeatable scientific principles
+
+```{r}
+postings_clean |> 
+  filter(industry_simple != "Recruiting") |> 
+  group_by(job_category, industry_simple) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = median(normalized_salary, na.rm = TRUE)) |> 
+  filter(job_category == "Director") |> 
+  rbind(
+    postings_clean |> 
+      filter(industry_simple != "Recruiting") |> 
+      group_by(industry_simple) |> 
+      summarise(n = n_distinct(job_id), 
+                salary = mean(normalized_salary, na.rm = TRUE)) |> 
+      mutate(job_category = "All")
+  ) |> 
+  select(-n) |> 
+  pivot_wider(names_from = "job_category", 
+              values_from = "salary") |> 
+  mutate(ratio = Director / All)
+  ggplot(aes(x = salary, y = industry_simple)) + 
+  geom_col(aes(fill = job_category), 
+           position = "dodge")  
+  facet_wrap(~ job_category)
+  group_by(industry_simple) |> 
+  filter(!is.nan(salary)) |> 
+  mutate(pc = n / sum(n), 
+         budget = n * salary) |> 
+  ungroup() |> 
+  filter(job_category %in% c("Director", "Manager")) |> 
+  mutate(ratio = budget / n)
+  
+```
