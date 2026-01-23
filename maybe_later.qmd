@@ -1,0 +1,46 @@
+---
+title: "maybe_later"
+---
+
+```{r}
+mutate(model = map(data, ~ t.test(.$fatalities)))
+
+postings_clean |> 
+  filter(industry_simple != "Recruiting" & company_name != "A Hiring Company") |> 
+  group_by(industry, company_id) |> 
+  summarise(postings = n_distinct(job_id), 
+            .groups = "drop") |> 
+  group_by(industry) |> 
+  mutate(industry_postings = sum(postings), 
+         pc = postings / industry_postings) |> 
+  arrange(desc(pc)) |> 
+  slice_head(n = 10) |>
+  group_by(industry) |> 
+  summarise(pc = sum(pc)) |> 
+  left_join(
+    postings_clean |> 
+      filter(industry_simple != "Recruiting" & company_name != "A Hiring Company") |> 
+      group_by(industry) |> 
+      summarise(postings = n_distinct(job_id), 
+                salary = mean(normalized_salary, na.rm = TRUE))
+  ) |> 
+  filter(postings > 50) %>% 
+  lm(salary ~ pc, data = .) |> 
+  summary()
+
+
+postings_clean |> 
+  filter(industry_simple != "Recruiting" & company_name != "A Hiring Company") |>
+  group_by(company_name) |> 
+  summarise(salary = mean(normalized_salary, na.rm = TRUE), 
+            postings = n_distinct(job_id)) |> 
+  filter(!is.nan(salary)) %>% 
+  lm(salary ~ postings, data = .) |> 
+  summary() 
+  
+  
+  ggplot(aes(x = salary, y = postings)) + 
+  geom_point()  
+  scale_x_log10() + 
+  scale_y_log10()
+```
