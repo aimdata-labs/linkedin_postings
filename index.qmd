@@ -393,6 +393,7 @@ With reference to the plot above, IT, Healthcare, Manufacturing, Retail and Fina
 Let's add a column for job categories. Whilst the dataset does already have a column for `formatted experience level`, this data is lacking for 23% of all postings. I also find LinkedIn's categories somewhat lacking in definition and not distinctive enough. 
 
 So, instead of the six categories (Internship, Entry-level, Associate, Mid-Senior level, Executive and Director) provided by LinkedIn, we now have fifteen. Whilst my categorisation is admittedly imperfect, we have managed to cut down jobs in the "Other" category from 23% to 11%. Further refinement is possible, but there are diminishing returns to wading through that many layers of corporate obfuscation and doublespeak. 
+
 A cursory inspection, plotted below, shows that my categorisation has been commonsensical. 
 
 Directors, Engineers, Licensed Professionals and Managers earn the most. This lines up with our expectations and we will use these job categories in the later sections when we talk about "good jobs".
@@ -423,6 +424,8 @@ postings_clean |>
        fill = "Mean\nSalary", 
        caption = "Source: Arsh Koneru, Zoey Yu Zou and LinkedIn.com")
 
+ggsave(here("plots", "mean_salary_job_category.png"), 
+       width = 8, height = 5, units = "in", dpi = 300)
 ```
 
 <br>
@@ -437,7 +440,7 @@ The rarest category of jobs are Creatives. But, unlike what your parents told yo
 
 ## Which industries have the most 'good jobs'? 
 
-IT and Pharmaceuticals have the highest proportions of jobs posted being good jobs, with more than 50% of jobs posted being for Managers, Licensed Professionals, Engineers and Directors. The industries which are seeking to hire the highest proportions of Licensed Professionals are, unsurprisingly, the Healthcare and Legal industries. 
+IT, Pharmaceuticals and the Legal industry have the highest proportions of good jobs, with more than 50% of jobs posted being for Managers, Licensed Professionals, Engineers and Directors. The industries which are seeking to hire the highest proportions of Licensed Professionals are, unsurprisingly, the Healthcare and Legal industries. 
 
 As we will look at later, Pharmaceuticals, Entertainment and Advertising have the highest proportion of director/senior-level postings. 
 
@@ -484,7 +487,7 @@ ggsave(here("plots", "good_jobs.png"),
 
 <br>
 
-Unsurprisingly, Hospitality and Retail and F&B have the highest proportion of low-skilled labourer jobs. And Retail and Sales have the lowest proportions of director-level jobs. 
+Hospitality and F&B have the highest proportion of low-skilled labourer jobs. And Retail and Natural Resources the lowest proportions of director-level jobs. 
 
 Education and Government Administration seem to be dying. And given that this data was scraped before DOGE and the great sack of the American government, these industries likely have an even worse proportion of good jobs now. 
 
@@ -799,6 +802,11 @@ postings_clean |>
   slice_head(n = 5) |>
   ungroup() |>
   select(-postings, -industry_postings) |> 
+  rename(
+    Industry = industry_simple, 
+    Company = company_name, 
+    `% of jobs posted` = percentage
+  ) |>
   kable(booktabs = TRUE, 
         caption = "Percent of postings by the five largest hirers per industry") |> 
   kable_classic_2("striped")

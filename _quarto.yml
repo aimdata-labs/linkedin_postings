@@ -34,6 +34,8 @@ format:
     page-layout: full
     self-contained-math: true
     embed-resources: true
+    link-external-icon: true
+    link-external-newwindow: true
 
 editor: source
 
