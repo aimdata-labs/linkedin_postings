@@ -370,7 +370,7 @@ summary_stats |>
   geom_col(aes(fill = companies)) + 
   scale_x_continuous(labels = comma) +
   scale_fill_viridis(direction = -1, option = "plasma", begin = .3) +
-  labs(title = "LinkedIn job postings in 2023-2024, by industry", 
+  labs(title = "Job postings in 2023-2024", 
        subtitle = "Excludes postings by recruiters", 
        y = "", x = "Number of job postings", 
        fill = "Number of\ncompanies", 
