@@ -3,7 +3,7 @@ title: "Linkedin postings"
 subtitle: "Part one"
 author: "Sean Ng"
 organization: "AIMdata"
-date-modified: "11 January 2026"
+date-modified: "26 January 2026"
 execute: 
   echo: false
 ---
@@ -231,18 +231,21 @@ job_category_cleaning <- function(tbl){
     mutate(
       job_category = 
         case_when(
+          # So that Chief Engineers are still engineers
+          str_detect(title, "Engineer|Developer|Quality Inspector|Quality Control Inspector|Construction Inspector|User Experience Designer|UI/UX Designer") ~ 
+            "Engineer", 
            # I think an Account Executive is part of the managerial class
           str_detect(title,
                      "Manager|MANAGER|Superintendent|Supervisor|Lead|Product Owner|Scrum Master|Cloud Architect|Sous Chef|Human Resources Business Partner|HR Business Partner|Account Executive|Partnership Executive")  & 
             !str_detect(title, "Chief") ~ 
             "Manager",
+          str_detect(title, "Partner") & industry_simple == "Legal" ~ "Manager",
           str_detect(title, "Chief|Director|Business Owner|Co-Founder|Executive|Vice President|Head") & 
             !str_detect(title, "Executive Assistant|Sales Executive|Housekeeper") ~ 
                     "Director",
           str_detect(title, "Trainee|Intern|Paralegal|Entry Level|Support|Teller|ENTRY LEVEL|Accounting Clerk|Graduate Program|Universal Banker|Data Entry Clerk") ~ 
             "Entry Level",
-          str_detect(title, "Engineer|Developer|Quality Inspector|Quality Control Inspector|Construction Inspector|User Experience Designer|UI/UX Designer") ~ 
-            "Engineer", 
+          str_detect(title, "Associate") & industry_simple == "Legal" ~ "Licensed Professional", 
           str_detect(title, 
                      "Attorney|Nurse|Therapist|Dental Hygienist|Architect|Licensed Clinical Social Worker|Physician|Nurse|NURSE|RN|Registered Dietitian|Chemist|Dentist|OCCUPATIONAL THERAPIST|Licensed Mental Health Counselor|Pharmacist|Psychiatrist|Veterinarian|Accountant|Bookkeeper|Auditor|Clinician|Behavior Interventionist|Neurologist|Cardiologist|Optometrist|THERAPIST|Medicine Resident") ~ 
                     "Licensed Professional",
@@ -303,14 +306,14 @@ postings_clean <- read_csv("./raw_data/postings.csv") |>
 
 We're looking at another set of scraped data today. This time, over 124,000 LinkedIn job postings over 2023-2024 were scraped by [Arsh Koneru and Zoey Yu Zou](https://doi.org/10.34740/kaggle/dsv/9200871). 
 
-The main limitations of the dataset is that LinkedIn is not representative of all jobs. [53% of LinkedIn users](https://blog.hootsuite.com/linkedin-demographics/#:~:text=What%20the%20data%20tells%20us,makers%20and%20executive%20audiences%20worldwide.) earn more than USD 100,000 a year and 54% of LinkedIn users are university graduates.
+The scrapers retrieved the most recent job postings in relation to the 48-hour period during which their scraping script was run. I think retrieving jobs based on recency provides a fair sample of the jobs on LinkedIn. 
 
-The scrapers retrieved the most recent job postings in relation to the 48-hour period during which their scraping script was run. We just have to bear that in mind for any of the statistical tests we run.
+The main limitation is then that LinkedIn is not representative of the job market. [53% of LinkedIn users](https://blog.hootsuite.com/linkedin-demographics/#:~:text=What%20the%20data%20tells%20us,makers%20and%20executive%20audiences%20worldwide.) earn more than USD 100,000 a year and 54% of LinkedIn users are university graduates.
 
 Additionally, for many of the analyses below, we have filtered out jobs posted by recruiters and middlemen, since it's not possible to tell which company of or industry they are from. Postings by recruiters make up 16.4% of the dataset. 
 
 
-```{r eval=FALSE}
+```{r stats-in-text, eval=FALSE}
 postings_clean |> 
   filter(industry_simple != "Recruiting") |> 
   mutate(top5 = ifelse(industry_simple %in% 
@@ -333,10 +336,13 @@ postings_clean |>
 
 ### Overview by industry
 
-Looking at the five largest industries by number of job postings, we can confirm several things that we already likely know from cultural osmosis: IT is a large and well-compensated industry and present the most opportunities for job seekers. Healthcare and Manufacturing, whilst having many new jobs, have middling salaries, on average. There are a large number of poorly-compensated retail jobs. Financial services have been dethroned by IT as the most "premium" industry -- likely because the financialisation and securitisation of everything means that all industries are now over-commodified, not just finance. 
+Looking at the five largest industries by number of job postings, we can confirm several things that we already likely know from cultural osmosis: IT is a large and well-compensated industry. Healthcare and Manufacturing, whilst having many new jobs, have middling salaries, on average. There are a large number of poorly-compensated retail jobs. 
 
+Financial services have been dethroned by IT as the most "premium" industry -- likely because the financialisation and securitisation of everything means that all industries are now over-commodified, not just finance. 
 
-```{r fig.height=6}
+<br>
+
+```{r summary-plots, fig.height=6}
 summary_stats <- postings_clean |> 
   filter(industry_simple != "Recruiting") |> 
   group_by(industry_simple) |> 
@@ -376,7 +382,7 @@ summary_stats |>
 
 <br>
 
- With reference to the plot above, IT, Healthcare, Manufacturing, Retail and Financial Services posted 65.6% of all jobs. The lowest salaries, overall, can be found in the Retail and Hospitality industries. 
+With reference to the plot above, IT, Healthcare, Manufacturing, Retail and Financial Services posted 65.6% of all jobs. The lowest salaries, overall, can be found in the Retail and Hospitality industries. 
 
 
 
@@ -384,7 +390,7 @@ summary_stats |>
 
 ## Job categories
 
-Let's add a column for job categories. Whilst the dataset does already have a column for `formatted experience level`, this data is lacking for 23% of all postings and I also find LinkedIn's experience categories to be too few and not distinctive enough. 
+Let's add a column for job categories. Whilst the dataset does already have a column for `formatted experience level`, this data is lacking for 23% of all postings. I also find LinkedIn's categories somewhat lacking in definition and not distinctive enough. 
 
 So, instead of the six categories (Internship, Entry-level, Associate, Mid-Senior level, Executive and Director) provided by LinkedIn, we now have fifteen. Whilst my categorisation is admittedly imperfect, we have managed to cut down jobs in the "Other" category from 23% to 11%. Further refinement is possible, but there are diminishing returns to wading through that many layers of corporate obfuscation and doublespeak. 
 A cursory inspection, plotted below, shows that my categorisation has been commonsensical. 
@@ -395,7 +401,7 @@ Directors, Engineers, Licensed Professionals and Managers earn the most. This li
 <br>
 
 
-```{r}
+```{r salary-job-category}
 postings_clean |>
   # Not sure this is the right filter
   # We can play around with it
@@ -423,19 +429,21 @@ postings_clean |>
 
 White-collar jobs continue to pay more than blue-collar ones: Technicians, on average, still earn less than Associates and Entry-level jobs. 
 
+Middle management jobs are the most commonly posted category on LinkedIn. 
+
 The rarest category of jobs are Creatives. But, unlike what your parents told you, they are reasonably compensated. These jobs are just very scarce in comparison to the number of Arts and Communications graduates that exist. 
 
 <br><br><br>
 
-## Which industries have the most good jobs? 
+## Which industries have the most 'good jobs'? 
 
-IT and Pharmaceuticals have the highest proportions of jobs posted being good jobs, with more than 50% of jobs posted being for Managers, Licensed Professionals, Engineers and Directors. The industries which are seeking to hire the most Licensed Professionals are, unsurprisingly, the Healthcare and Legal industries. 
+IT and Pharmaceuticals have the highest proportions of jobs posted being good jobs, with more than 50% of jobs posted being for Managers, Licensed Professionals, Engineers and Directors. The industries which are seeking to hire the highest proportions of Licensed Professionals are, unsurprisingly, the Healthcare and Legal industries. 
 
 As we will look at later, Pharmaceuticals, Entertainment and Advertising have the highest proportion of director/senior-level postings. 
 
 <br>
 
-```{r}
+```{r good-jobs}
 postings_clean |> 
   filter(industry_simple != "Recruiting") |> 
   group_by(job_category, industry_simple) |> 
@@ -476,7 +484,7 @@ ggsave(here("plots", "good_jobs.png"),
 
 <br>
 
-Unsurprisingly, Hospitality and Retail and F&B have the highest proportion of low-skilled labourer jobs. And Retail and Sales have the lowest proportions of senior management or director-level jobs. 
+Unsurprisingly, Hospitality and Retail and F&B have the highest proportion of low-skilled labourer jobs. And Retail and Sales have the lowest proportions of director-level jobs. 
 
 Education and Government Administration seem to be dying. And given that this data was scraped before DOGE and the great sack of the American government, these industries likely have an even worse proportion of good jobs now. 
 
@@ -489,12 +497,15 @@ Education and Government Administration seem to be dying. And given that this da
 
 Let's take a look next at the breakdown of job applications.
 
-Almost a quarter of job applications in Hospitality and Civil Society were for the limited director-level roles. This is probably a combination of several factors. Possibly, only more senior candidates in the Hospitality industry use LinkedIn, and also that requirements for director-level positions in the Hospitality industry are not as stringent as other industries. Or it could also be due to the Hospitality industry having the second lowest pay amongst all industries, turning people away from the less remunerated positions.  
+Almost a quarter of job applications in Hospitality and Civil Society were for the limited director-level roles. 
+
+Possibly, only more senior candidates in the Hospitality industry use LinkedIn, or that requirements for director-level positions in the Hospitality industry are not as stringent as other industries. Or it could also be due to the Hospitality industry having the second lowest pay amongst all industries, turning people away from the less remunerated positions.  
+
 
 
 <br>
 
-```{r}
+```{r applications}
 postings_clean |> 
   filter(industry_simple != "Recruiting") |> 
   group_by(job_category, industry_simple) |> 
@@ -541,7 +552,7 @@ Let's next take a look at the most oversubscribed and undersubscribed job catego
 
 The most oversubscribed job categories are Analysts and Engineers, followed by Creatives. This likely speaks to the glut of coders, programmers and mid-range professionals across all industries, as well as the relatively small number of Creative jobs compared to the people who are interested in them. 
 
-The most undersubscribed jobs are Labourers and Officers (across all industries), as well as, Licensed Professionals in Healthcare, Wellness as well as in the Government. As talent and money continue to be funnelled towards IT and Financial Services, there is, perhaps, a lessened desire to pursue strenuous professional certifications when you can just earn more by code or engaging in market manipulation. 
+The most undersubscribed jobs are Labourers and Officers (across all industries), as well as Licensed Professionals in Healthcare, Wellness and in the Government. As talent and money continue to be funnelled towards IT and Financial Services, there is, perhaps, a lessened desire to pursue more strenuous professional certifications when you can just earn more by coding or engaging in market manipulation. 
 
 <br>
 
@@ -619,15 +630,15 @@ ggsave(here("plots", "oversubscribed_undersubscribed.png"),
 
 ### Most top-heavy industries 
 
-True inequality exists in the gulf between capitalists and workers. But that's not what LinkedIn is about, though it is a symptom of the disease. 
+The true inequality exists in the gulf between capitalists and workers. But that's not what LinkedIn is about, though it is a symptom of the disease. 
 
 Nevertheless, at the risk of undermining worker solidarity, let us look at how staffing budgets are broken down between different job categories. 
 
 In the plot below, we have pro-rated the mean salary per job category per industry by the number of postings. 
 
-Advertising, Pharmaceuticals and Biotech and Communications and Events pay out around 25% of salaries just to their directors. We'll take a closer look below, since we're all probably getting Theranos flashbacks.
+Advertising, Pharmaceuticals and Biotech and Communications and Events pay out around 25% of salaries of their advertised jobs just to directors. We'll take a closer look below, since we're all probably getting Theranos flashbacks.
 
-In Pharmaceuticals and IT, around 70% of the staff budget is dedicated towards Directors, Engineers, Licensed Professionals and Managers. At first, this seems commonsensical, since these are specialised fields that sometimes require more training and expertise than postgraduate education can sometimes provide. 
+In Pharmaceuticals, IT and the Legal industry, around 70% of the 'staff budget' is dedicated towards Directors, Engineers, Licensed Professionals and Managers. 
  
 
 <br>
@@ -678,11 +689,10 @@ Taking a closer look at Pharmaceuticals and Advertising, we can see a pattern th
 
 In the case of Civil Society, you need directors for field operations and fundraising ("development", as in business development). In Advertising, you need account directors and creative directors. And in Pharmaceuticals, you have research, manufacturing and sales. 
 
-As to which of these is the core purpose of these companies, from experience, I'd say that revenue generation always wins. And through gradual erosion, the revenue-generating functions will eventually corrupt and override your core purpose. 
 
 <br>
 
-```{r}
+```{r kbl-bifurcated-industries}
 postings_clean |> 
   filter(job_category == "Director" & 
            industry_simple %in% c("Pharmaceuticals and Biotech", 
@@ -707,7 +717,10 @@ postings_clean |>
 
 <br>
 
+As to which of these is the core purpose of these companies, from experience, I'd say that revenue generation always wins. And through gradual erosion, the revenue-generating functions will eventually corrupt and override your core purpose. 
+
 I would like to go into further detail, but one of the limitations of the dataset is that LinkedIn, as mentioned, is not the entire job market. Additionally, the ratio of CEO pay to worker pay has already been documented by the [AFL-CIO](https://aflcio.org/paywatch/company-pay-ratios). 
+
 
 
 <br><br><br>
@@ -729,7 +742,7 @@ To add our two cents to the topic, with regards to the plot below which shows th
 
 <br>
 
-```{r}
+```{r consolidation}
 postings_clean |> 
   filter(industry_simple != "Recruiting" & company_name != "A Hiring Company") |> 
   group_by(industry_simple, company_id) |> 
@@ -760,14 +773,14 @@ ggsave(here("plots", "consolidation.png"),
 
 <br>
 
-Unsurprisingly, some of the most consolidated industries also have the largest barriers to entry: Security often requires government contacts, weapons and the murder of indigenous groups; Telecoms and utilities require massive investment in infrastructure; and Hospitality requires land plots in convenient locations for hotels. 
+Unsurprisingly, some of the most consolidated industries also have the largest barriers to entry: Security often requires government contacts, weapons and the murder of indigenous groups and minorities; Telecoms and utilities require massive investment in infrastructure; and Hospitality requires land plots in convenient locations for hotels. 
 
 But we also see excess consolidation where the barriers to entry are lower: food manufacturing can often occur at a smaller scale. Opening a gym or spa requires a much lower level of investment than opening a hotel. Yet F&B and Wellness are also extremely consolidated, with around 50% of jobs being posted by just 20 companies.
 
 
 <br>
 
-```{r}
+```{r kbl-consolidation}
 postings_clean |> 
   filter(industry_simple %in% c("Security", "Telecoms and Utilities", 
                                 "Hospitality and Travel", "F&B", 
@@ -804,31 +817,33 @@ Oligopolies create significant inefficiencies, at the expense of the consumer. T
 ![](./plots/deadweight_loss.png)
 <br>
 
-Pellegrino's model also suggests that higher levels of concentration lead to higher markups, meaning that, as he [puts it](https://www.promarket.org/2019/09/16/the-cost-of-america-oligopoly-problem/), "The consumer is losing twice". Once from higher markups and again from greater deadweight loss. 
+Pellegrino's model also indicates that higher levels of concentration lead to higher markups, meaning that, as he [puts it](https://www.promarket.org/2019/09/16/the-cost-of-america-oligopoly-problem/), "The consumer is losing twice". Once from higher markups and again from greater deadweight loss. 
 
-So, what does this mean for you and me? We have to vote for trustbusting and force oligopolies to separate. Failure to do so, will make warnings about mergers and acquisitions made by [Liz Lemon](https://www.imdb.com/title/tt0496424/) all the more prescient: "What if my favourite brand of spicy chips also sold diarrhoea medication?" We're now at the stage of Malboro making [asthma inhalers](https://onlinelibrary.wiley.com/doi/full/10.1111/resp.14244?trk=public_post_comment-text).
+So, what does this mean for you and me? We have to vote for politicians who are committed to trustbusting, forcing oligopolies to separate and limiting the mobility of capital. Failure to do so, will make warnings about mergers and acquisitions made by [Liz Lemon](https://www.imdb.com/title/tt0496424/) all the more prescient: "What if my favourite brand of spicy chips also sold diarrhoea medication?" We're now at the stage of Malboro making [asthma inhalers](https://onlinelibrary.wiley.com/doi/full/10.1111/resp.14244?trk=public_post_comment-text).
 
 If only it were just pulling the ladder up behind you. 
 
 <br><br><br>
 
-## A note on Enshittification 
 
-How much exists in the world of numbers and the world of humans? A parallel problem to the oligopolisation of the job marketplace is the enshittification of work and work outputs. 
 
-If financialisation is the the [increasing role](https://www.tni.org/en/publication/financialisation-a-primer) of financial motives, markets, actors and institutions, resulting in "financial intermediaries and technologies [gaining] an unprecedented influence over our lives", the perhaps enshittification is process by which AIs and algorithms, perverse indicators, gamification, and over-optimisation (corner cutting) have reduced and cheapened our lives, resulting in a greater and greater divorce from reality. 
+<br><br><br>
 
-One clear example of this is just how many Software Engineers are hired in Advertising. 
+## Appendices
 
-The least tech forward industry, at least according to new jobs posted, is Hospitality, followed by Retail and F&B. 
+### A note on Enshittification 
 
-However, we don't really know how many engineers and analysts are needed. 
+A parallel problem to the oligopolisation of the job marketplace is the enshittification of work and work outputs. 
+
+If financialisation is the the [increasing role](https://www.tni.org/en/publication/financialisation-a-primer) of financial motives, markets, actors and institutions, resulting in "financial intermediaries and technologies [gaining] an unprecedented influence over our lives", then enshittification is process by which AIs and algorithms, perverse indicators, gamification, and over-optimisation (corner cutting) have reduced and cheapened our lives, resulting in a greater and greater divorce from an increasingly bleak reality. 
+
+From the plot below, we see that the industries that are the most digitised (after IT) are, unsurprisingly, Business Consulting, Financial Services, Telecoms and Utilities and Insurance. These are all highly financialised sectors that are known to be at the forefront of change (management) and cross-industry fads. It is commonsensical that they would be the most fervent adopters of AI and Machine Learning. 
+
+However, the Entertainment and Advertising industries are also highly "optimised" and engineered, a portent, perhaps, of the incoming wave of AI-generated content. 
 
 <br>
 
-
-
-```{r}
+```{r enshittification}
 postings_clean |> 
   filter(industry_simple != "Recruiting") |> 
   mutate(is_it = ifelse(
@@ -842,14 +857,143 @@ postings_clean |>
   ungroup() |> 
   mutate(pc = is_it / n) |> 
   ggplot(aes(x = pc, y = fct_reorder(industry_simple, pc))) + 
-  geom_col() + 
+  geom_col(fill = "#f6bd60") + 
   scale_x_continuous(labels = percent) +
   labs(title = "Percent of jobs in the world of numbers", 
        subtitle = "Jobs with some variation of ML/AI/Data/Full Stack in their titles",
        x = "", 
        y = "")
+
+ggsave(here("plots", "enshittification.png"), 
+       width = 8, height = 5, units = "in", dpi = 300)  
 ```
 
+<br>
+
+The least tech-forward industry, at least according to new jobs posted, is Hospitality, followed by Retail and F&B. They are the most grounded in the real world. Their enshittification primarily occurs outside of these industries themselves, with middlemen like Trip.com, Agoda, Uber and Doordash undertaking the over-optimisation process on their behalf. 
+
+
+<br><br><br>
+
+### Salaries by industry and job category
+
+Unskilled labour pays the best in Telecoms and Utilities and Natural Resources. Strangely, in Education, Associates are paid slightly more than Teachers (who have been classed as Officers), likely contributing to the shortage of qualified teachers. 
+
+<br>
+
+```{r low-end}
+postings_clean |> 
+  filter(industry_simple != "Recruiting") |> 
+  group_by(job_category, industry_simple) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = mean(normalized_salary, na.rm = TRUE)) |> 
+  filter(job_category %in% c("Officer", "Associate", "Entry Level", 
+                    "Technician", "Assistant", "Labourer")) |> 
+  mutate(job_category = fct_relevel(
+    job_category, c("Officer", "Associate", "Entry Level", 
+                    "Technician", "Assistant", "Labourer")
+  )) |>
+  arrange(job_category) |> 
+  ggplot(aes(x = salary, y = fct_relevel(job_category, 
+                                         c("Labourer",
+                                           "Assistant",
+                                           "Technician",
+                                           "Entry Level",
+                                           "Associate",
+                                           "Officer")))) + 
+  geom_col(aes(fill = job_category)) + 
+  geom_vline(xintercept = .5, linetype = "longdash", colour = "white", alpha = .4) +
+  geom_vline(xintercept = .75, linetype = "longdash", colour = "white", alpha = .4) +
+  scale_fill_manual(values = c( "Officer" = "#F4C73AFF", 
+      "Associate" = "#FE9B2DFF", "Entry Level" = "#F46516FF", 
+      "Technician" = "#DB3A07FF", "Assistant" = "#B21A01FF", 
+      "Labourer" = "#7A0403FF"
+    )) + 
+  facet_wrap(~ industry_simple) + 
+  scale_x_continuous(labels = number_format(scale = 0.001, suffix = "k")) + 
+  labs(x = "Mean annual salary (USD)", 
+       y = "", 
+       title = "Which industries are the best to start out in?") + 
+  theme(strip.background = element_rect(fill = "black"), 
+        strip.text = element_text(size = 8.5)) + 
+  guides(fill = "none")
+
+```
+
+<br>
+
+
+```{r mid-range}
+
+postings_clean |> 
+  filter(industry_simple != "Recruiting") |> 
+  group_by(job_category, industry_simple) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = mean(normalized_salary, na.rm = TRUE)) |> 
+  filter(job_category %in% c("Specialist", 
+                    "Other", "Analyst", "Creative", 
+                    "Consultant")) |> 
+  arrange(job_category) |> 
+  ggplot(aes(x = salary, y = fct_relevel(job_category, 
+                                         c("Specialist",
+                                           "Other",
+                                           "Analyst",
+                                           "Creative",
+                                           "Consultant")))) + 
+  geom_col(aes(fill = job_category)) + 
+  geom_vline(xintercept = .5, linetype = "longdash", colour = "white", alpha = .4) +
+  geom_vline(xintercept = .75, linetype = "longdash", colour = "white", alpha = .4) +
+  scale_fill_manual(values = c( "Consultant" = "#1BD0D5FF", "Creative" = "#25ECA7FF", 
+      "Analyst" = "#62FC6BFF", "Other" = "#A2FC3CFF", 
+      "Specialist" = "#D2E935FF"
+    )) + 
+  facet_wrap(~ industry_simple) + 
+  scale_x_continuous(labels = number_format(scale = 0.001, suffix = "k")) + 
+  labs(x = "Mean annual salary (USD)", 
+       y = "", 
+       title = "Mid-range jobs by industry") + 
+  theme(strip.background = element_rect(fill = "black"), 
+        strip.text = element_text(size = 8.5)) + 
+  guides(fill = "none")
+
+```
+
+
+<br>
+
+Directors in Education and Civil Society are most lowly-paid out of all industries. 
+
+```{r top-end}
+postings_clean |> 
+  filter(industry_simple != "Recruiting") |> 
+  group_by(job_category, industry_simple) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = mean(normalized_salary, na.rm = TRUE)) |> 
+  filter(job_category %in% c("Manager",
+                             "Licensed Professional",
+                             "Engineer",
+                             "Director")) |> 
+  arrange(job_category) |> 
+  ggplot(aes(x = salary, y = fct_relevel(job_category, 
+                                         c("Manager",
+                                           "Licensed Professional",
+                                           "Engineer",
+                                           "Director")))) + 
+  geom_col(aes(fill = job_category)) + 
+  geom_vline(xintercept = .5, linetype = "longdash", colour = "white", alpha = .4) +
+  geom_vline(xintercept = .75, linetype = "longdash", colour = "white", alpha = .4) +
+  scale_fill_manual(values = c( "Director" = "#30123BFF", "Engineer" = "#4147ADFF", 
+      "Licensed Professional" = "#4777EFFF", "Manager" = "#39A4FBFF"
+    )) + 
+  facet_wrap(~ industry_simple) + 
+  scale_x_continuous(labels = number_format(scale = 0.001, suffix = "k")) + 
+  labs(x = "Mean annual salary (USD)", 
+       y = "", 
+       title = "Senior jobs by industry") + 
+  theme(strip.background = element_rect(fill = "black"), 
+        strip.text = element_text(size = 8.5)) + 
+  guides(fill = "none")
+```
 
 
 
