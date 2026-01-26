@@ -14,7 +14,8 @@ execute:
 knitr::opts_chunk$set(echo = FALSE, 
                       warning = FALSE, 
                       message = FALSE, 
-                      fig.width = 9)
+                      fig.width = 9, 
+                      fig.height = 6)
 
 
 library(tidyverse)
@@ -42,7 +43,6 @@ Mode <- function(x) {
   ux[which.max(tabulate(match(x, ux)))]
 }
 ```
-
 
 
 ```{r data}
@@ -619,17 +619,16 @@ ggsave(here("plots", "oversubscribed_undersubscribed.png"),
 
 ### Most top-heavy industries 
 
-True inequality exists in the gulf between capital and workers. But that's not what LinkedIn is about, though it is a symptom of the disease. 
+True inequality exists in the gulf between capitalists and workers. But that's not what LinkedIn is about, though it is a symptom of the disease. 
 
 Nevertheless, at the risk of undermining worker solidarity, let us look at how staffing budgets are broken down between different job categories. 
 
 In the plot below, we have pro-rated the mean salary per job category per industry by the number of postings. 
 
-Advertising, Pharmaceuticals and Biotech and Communications and Events pay out more than 25% of salaries just to their directors. We'll take a closer look below, since we're all probably getting Theranos flashbacks.
+Advertising, Pharmaceuticals and Biotech and Communications and Events pay out around 25% of salaries just to their directors. We'll take a closer look below, since we're all probably getting Theranos flashbacks.
 
 In Pharmaceuticals and IT, around 70% of the staff budget is dedicated towards Directors, Engineers, Licensed Professionals and Managers. At first, this seems commonsensical, since these are specialised fields that sometimes require more training and expertise than postgraduate education can sometimes provide. 
-
-Government administration and Education are much more egalitarian, though not as lucrative. 
+ 
 
 <br>
 
@@ -725,7 +724,7 @@ If you were to search up "[Herfindahl-Hirschman Index](https://en.wikipedia.org/
 
 Perhaps this is an indication that the oligopolistic tendencies of the corporate overclass have long gone unchecked and unquestioned, with hard data hidden behind paywalls, away from the general public. 
 
-To add our two cents to the topic, with regards to the plot below which shows the percent of jobs posted by just the top 20 largest companies, all industries show signs of oligopoly and excess concentration. Even at the lower-end of the chart, the top 20 IT companies are responsible for 1% of all job postings each. A clear sign of overconcentration, even if you ignore the Magnificent Seven's stranglehold on patents and market capitalisation. 
+To add our two cents to the topic, with regards to the plot below which shows the percent of jobs posted by just the top 20 largest companies, all industries show signs of oligopoly and excess concentration. Even at the lower-end of the chart, the top 20 IT companies are responsible for an average of 1% of all job postings each. This is a pretty clear sign of overconcentration, even if you ignore the Magnificent Seven's stranglehold on patents and market capitalisation. 
 
 
 <br>
@@ -795,11 +794,6 @@ postings_clean |>
 
 <br>
 
-Though if you were to search up "[Herfindahl-Hirschman Index](https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_index#:~:text=HHI%20is%20calculated%20by%20squaring,share%2C%20weighted%20by%20market%20share.) by industry", you will find no relevant recent results. Perhaps of an indications that the oligopolistic tendencies of the corporate overclass have long gone unchecked and unquestioned. 
-
-The last mention of it by the Bureau of Labor Statistics dates back to 2012 (with a report in 2014), and even then, the report never looks at consolidation and overconcentration of jobs within industries. But the position of the US government on oligopolies has long been clear. 
-
-All industries show signs of oligopoly and excess concentration -- even in IT, 20 companies post 20% of all jobs. Notwithstanding the FAANG companies' stranglehold on patents and market capitalisation. 
 
 Oligopolies create significant inefficiencies, at the expense of the consumer. This was proven by [Bruno Pellegrino](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3329688) in his new model, which confirms that the US economy has not only become more oligopolised but also more inefficient, to the detriment of the consumer. The chart below shows that deadweight loss (loss due to economic inefficiency) due to oligopolies has increased substantially over the past two decades:
 
@@ -812,7 +806,7 @@ Oligopolies create significant inefficiencies, at the expense of the consumer. T
 
 Pellegrino's model also suggests that higher levels of concentration lead to higher markups, meaning that, as he [puts it](https://www.promarket.org/2019/09/16/the-cost-of-america-oligopoly-problem/), "The consumer is losing twice". Once from higher markups and again from greater deadweight loss. 
 
-So, what does this mean for you and me? We have to vote for trustbusting and force oligopolies to separate. Failure to do so, will make warnings about mergers and acquisitions made by [Liz Lemon](https://www.imdb.com/title/tt0496424/) all the more prescient: "What if my favourite brand of spicy chips also sold diarrhoea medication?" We're now at the stage of what if a Malboro also made [asthma inhalers](https://onlinelibrary.wiley.com/doi/full/10.1111/resp.14244?trk=public_post_comment-text)?
+So, what does this mean for you and me? We have to vote for trustbusting and force oligopolies to separate. Failure to do so, will make warnings about mergers and acquisitions made by [Liz Lemon](https://www.imdb.com/title/tt0496424/) all the more prescient: "What if my favourite brand of spicy chips also sold diarrhoea medication?" We're now at the stage of Malboro making [asthma inhalers](https://onlinelibrary.wiley.com/doi/full/10.1111/resp.14244?trk=public_post_comment-text).
 
 If only it were just pulling the ladder up behind you. 
 
@@ -822,15 +816,15 @@ If only it were just pulling the ladder up behind you.
 
 How much exists in the world of numbers and the world of humans? A parallel problem to the oligopolisation of the job marketplace is the enshittification of work and work outputs. 
 
-If financialisation is the the [increasing role](https://www.tni.org/en/publication/financialisation-a-primer) of financial motives, markets, actors and institutions, resulting in "financial intermediaries and technologies [gaining] an unprecedented influence over our lives", the perhaps enshittification is process by which AIs, algorithms, perverse indicators, gamification and over-optimisation (corner cutting) have reduced and cheapened our lives, resulting in a greater and greater divorce from reality. 
-
-Perhaps a key concept here is marginality or iteration, as in incremental gains from 
+If financialisation is the the [increasing role](https://www.tni.org/en/publication/financialisation-a-primer) of financial motives, markets, actors and institutions, resulting in "financial intermediaries and technologies [gaining] an unprecedented influence over our lives", the perhaps enshittification is process by which AIs and algorithms, perverse indicators, gamification, and over-optimisation (corner cutting) have reduced and cheapened our lives, resulting in a greater and greater divorce from reality. 
 
 One clear example of this is just how many Software Engineers are hired in Advertising. 
 
-financial intermediaries and technologies have gained unprecedented influence over our daily lives
+The least tech forward industry, at least according to new jobs posted, is Hospitality, followed by Retail and F&B. 
 
-financialization means the increasing role of financial motives, financial markets, financial actors and financial institutions in the operation of the domestic and international economies
+However, we don't really know how many engineers and analysts are needed. 
+
+<br>
 
 
 
@@ -856,128 +850,8 @@ postings_clean |>
        y = "")
 ```
 
-```{r}
-
-```
 
 
 
 
-
-
-## Indeed
-
-```{r}
-indeed <- stream_in(file(("./data/marketing_sample_for_indeed_usa-indeed_usa_job__20210101_20210331__30k_data.ldjson")))
-
-indeed |> glimpse()
-
-indeed |> count(category, sort = TRUE)
-```
-
-
-Contrary to the popular and misguided belief that government workers are parasites, government administration is not only a very small portion of job postings, but neither are their workers particularly well-compensated. 
-
-We should probably cross-reference this with data scraped from Indeed, but the only available dataset is only a marketing sample of 30,000 jobs. 
-
-Declining birthrates play a role in declining education. 
-
-
-
-Advertising, Entertainment and Pharmaceuticals and Biotech have the highest proportions of directors and executives. In Advertising's case: Creative Director 
-
-If financialisation is the overcommodification 
-Is AI-slopwork and black
-
-```{r}
-category_plot <- function(tbl){
-  
-  tbl |> 
-     mutate(job_category = fct_relevel(
-      job_category, c("Director", "Engineer", "Licensed Professional", 
-                      "Manager", "Consultant", "Creative", 
-                      "Analyst", "Other", "Specialist", 
-                      "Officer", "Associate", "Entry Level", 
-                      "Technician", "Assistant", "Labourer")
-    )) |>
-    group_by(industry, job_category) |> 
-    summarise(postings = n_distinct(job_id), 
-              companies = n_distinct(company_id), 
-              .groups = "drop") |> 
-    ggplot(aes(x = postings, 
-               y = fct_reorder(industry, postings), 
-               group = job_category)) +
-    geom_col(aes(fill = job_category)) + 
-    scale_fill_viridis_d(option = "turbo")
-}
-```
-
-
-
-<br>
-
-Higher education is your last hope for a good job in the Education industry
-Why there are more postings in Higher Education than Primary and Secondary Education speaks to? 
-Supposedly, there is much more job security and less turnover in Primary and Secondary Education. 
-
-Why are there, proportionally, so many more director-level jobs in Education?
-Is Education too top-heavy? 
-Massive monetisation of education. 
-
-More likely, 
-So maybe, it's more accurate to say that Higher Education (and Private Education) is dying
-
-This problem will likely continue as ballooning executive pay packages (Elon Musk insisting that shareholders owe him USD 1 trillion) and a managerial class that is not interested in shareholder needs. 
-
-Summary of [this thread](https://www.reddit.com/r/Economics/comments/1fcl6xl/when_the_mismanagerial_class_destroys_great/)
-
-the financialization of economy, with all businesses regarded by those who manage them — and create the regulatory frameworks within which they operate — simply as vehicles for generating profit.
-
-the rise of a managerial class that is trained in a generalism often rooted in highly esoteric theories, mainly designed to hide that the fact that it lacks either depth or rigorous and repeatable scientific principles
-
-```{r}
-postings_clean |> 
-  filter(industry_simple != "Recruiting") |> 
-  group_by(job_category, industry_simple) |> 
-  summarise(n = n_distinct(job_id), 
-            salary = median(normalized_salary, na.rm = TRUE)) |> 
-  filter(job_category == "Director") |> 
-  rbind(
-    postings_clean |> 
-      filter(industry_simple != "Recruiting") |> 
-      group_by(industry_simple) |> 
-      summarise(n = n_distinct(job_id), 
-                salary = mean(normalized_salary, na.rm = TRUE)) |> 
-      mutate(job_category = "All")
-  ) |> 
-  select(-n) |> 
-  pivot_wider(names_from = "job_category", 
-              values_from = "salary") |> 
-  mutate(ratio = Director / All)
-  ggplot(aes(x = salary, y = industry_simple)) + 
-  geom_col(aes(fill = job_category), 
-           position = "dodge")  
-  facet_wrap(~ job_category)
-  group_by(industry_simple) |> 
-  filter(!is.nan(salary)) |> 
-  mutate(pc = n / sum(n), 
-         budget = n * salary) |> 
-  ungroup() |> 
-  filter(job_category %in% c("Director", "Manager")) |> 
-  mutate(ratio = budget / n)
-  
-```
-
-But I'm curious, what about those of us not in the executive class (who have the liquidmetal ability to slink and spread themselves to various, unrelated industries)? Which industries have the highest proportions of "good jobs"? And what even is a "good job"? 
-
-The IT and Healthcare industries have made the largest number of job postings on LinkedIn. IT and Manufacturing have the 
-
-The IT industry continues to reward its workings comparatively well (to other industries, not to owners) and have more job postings than any other. Even with mass layoffs with the veneer of efficiency and AI, this trend probably continues to the present day. 
-
-Who are these crazy people claiming that "consolidation might be for the best"? 
-
-Rising operating costs, retailer pressure? 
-
-So it is now easier to acquire than it is to innovate. 
-Iteration
-Cultural stagnation. Let's just keep replaying the hits. 
+ 

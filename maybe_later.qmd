@@ -44,3 +44,133 @@ postings_clean |>
   scale_x_log10() + 
   scale_y_log10()
 ```
+
+## Indeed
+
+
+```{r}
+indeed <- stream_in(file(("./data/marketing_sample_for_indeed_usa-indeed_usa_job__20210101_20210331__30k_data.ldjson")))
+
+indeed |> glimpse()
+
+indeed |> count(category, sort = TRUE)
+```
+
+
+Contrary to the popular and misguided belief that government workers are parasites, government administration is not only a very small portion of job postings, but neither are their workers particularly well-compensated. 
+
+We should probably cross-reference this with data scraped from Indeed, but the only available dataset is only a marketing sample of 30,000 jobs. 
+
+Declining birthrates play a role in declining education. 
+
+
+
+Advertising, Entertainment and Pharmaceuticals and Biotech have the highest proportions of directors and executives. In Advertising's case: Creative Director 
+
+If financialisation is the overcommodification 
+Is AI-slopwork and black
+
+```{r}
+category_plot <- function(tbl){
+  
+  tbl |> 
+     mutate(job_category = fct_relevel(
+      job_category, c("Director", "Engineer", "Licensed Professional", 
+                      "Manager", "Consultant", "Creative", 
+                      "Analyst", "Other", "Specialist", 
+                      "Officer", "Associate", "Entry Level", 
+                      "Technician", "Assistant", "Labourer")
+    )) |>
+    group_by(industry, job_category) |> 
+    summarise(postings = n_distinct(job_id), 
+              companies = n_distinct(company_id), 
+              .groups = "drop") |> 
+    ggplot(aes(x = postings, 
+               y = fct_reorder(industry, postings), 
+               group = job_category)) +
+    geom_col(aes(fill = job_category)) + 
+    scale_fill_viridis_d(option = "turbo")
+}
+```
+
+
+
+<br>
+
+Higher education is your last hope for a good job in the Education industry
+Why there are more postings in Higher Education than Primary and Secondary Education speaks to? 
+Supposedly, there is much more job security and less turnover in Primary and Secondary Education. 
+
+Why are there, proportionally, so many more director-level jobs in Education?
+Is Education too top-heavy? 
+Massive monetisation of education. 
+
+More likely, 
+So maybe, it's more accurate to say that Higher Education (and Private Education) is dying
+
+This problem will likely continue as ballooning executive pay packages (Elon Musk insisting that shareholders owe him USD 1 trillion) and a managerial class that is not interested in shareholder needs. 
+
+Summary of [this thread](https://www.reddit.com/r/Economics/comments/1fcl6xl/when_the_mismanagerial_class_destroys_great/)
+
+the financialization of economy, with all businesses regarded by those who manage them — and create the regulatory frameworks within which they operate — simply as vehicles for generating profit.
+
+the rise of a managerial class that is trained in a generalism often rooted in highly esoteric theories, mainly designed to hide that the fact that it lacks either depth or rigorous and repeatable scientific principles
+
+```{r}
+postings_clean |> 
+  filter(industry_simple != "Recruiting") |> 
+  group_by(job_category, industry_simple) |> 
+  summarise(n = n_distinct(job_id), 
+            salary = median(normalized_salary, na.rm = TRUE)) |> 
+  filter(job_category == "Director") |> 
+  rbind(
+    postings_clean |> 
+      filter(industry_simple != "Recruiting") |> 
+      group_by(industry_simple) |> 
+      summarise(n = n_distinct(job_id), 
+                salary = mean(normalized_salary, na.rm = TRUE)) |> 
+      mutate(job_category = "All")
+  ) |> 
+  select(-n) |> 
+  pivot_wider(names_from = "job_category", 
+              values_from = "salary") |> 
+  mutate(ratio = Director / All)
+  ggplot(aes(x = salary, y = industry_simple)) + 
+  geom_col(aes(fill = job_category), 
+           position = "dodge")  
+  facet_wrap(~ job_category)
+  group_by(industry_simple) |> 
+  filter(!is.nan(salary)) |> 
+  mutate(pc = n / sum(n), 
+         budget = n * salary) |> 
+  ungroup() |> 
+  filter(job_category %in% c("Director", "Manager")) |> 
+  mutate(ratio = budget / n)
+  
+```
+
+But I'm curious, what about those of us not in the executive class (who have the liquidmetal ability to slink and spread themselves to various, unrelated industries)? Which industries have the highest proportions of "good jobs"? And what even is a "good job"? 
+
+The IT and Healthcare industries have made the largest number of job postings on LinkedIn. IT and Manufacturing have the 
+
+The IT industry continues to reward its workings comparatively well (to other industries, not to owners) and have more job postings than any other. Even with mass layoffs with the veneer of efficiency and AI, this trend probably continues to the present day. 
+
+Who are these crazy people claiming that "consolidation might be for the best"? 
+
+Rising operating costs, retailer pressure? 
+
+So it is now easier to acquire than it is to innovate. 
+Iteration
+Cultural stagnation. Let's just keep replaying the hits.
+
+Though if you were to search up "[Herfindahl-Hirschman Index](https://en.wikipedia.org/wiki/Herfindahl%E2%80%93Hirschman_index#:~:text=HHI%20is%20calculated%20by%20squaring,share%2C%20weighted%20by%20market%20share.) by industry", you will find no relevant recent results. Perhaps of an indications that the oligopolistic tendencies of the corporate overclass have long gone unchecked and unquestioned. 
+
+The last mention of it by the Bureau of Labor Statistics dates back to 2012 (with a report in 2014), and even then, the report never looks at consolidation and overconcentration of jobs within industries. But the position of the US government on oligopolies has long been clear. 
+
+All industries show signs of oligopoly and excess concentration -- even in IT, 20 companies post 20% of all jobs. Notwithstanding the FAANG companies' stranglehold on patents and market capitalisation.
+
+financial intermediaries and technologies have gained unprecedented influence over our daily lives
+
+financialization means the increasing role of financial motives, financial markets, financial actors and financial institutions in the operation of the domestic and international economies
+
+Perhaps a key concept here is marginality or iteration, as in incremental gains from 
