@@ -1,0 +1,113 @@
+---
+title: "Linkedin postings"
+subtitle: "Part one"
+author: "Sean Ng"
+organization: "AIMdata"
+date-modified: "28 January 2026"
+execute: 
+  echo: false
+---
+
+
+```{r setup, include = FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      fig.width = 9, 
+                      fig.height = 7)
+
+
+library(tidyverse)
+library(here)
+library(janitor)
+library(scales)
+library(tidytext)
+library(widyr)
+library(ggraph)
+library(patchwork)
+library(kableExtra)
+library(viridis)
+library(fuzzyjoin)
+library(textdata)
+library(stringr)
+library(topicmodels)
+
+`%out%` <- Negate(`%in%`)
+options(scipen = 100)
+theme_set(theme_light())
+range_wna <- function(x){(x-min(x, na.rm = TRUE))/(max(x, na.rm = TRUE)-min(x, na.rm = TRUE))}
+
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+```
+
+```{r data}
+postings_clean <- read_csv("./raw_data/postings_clean.csv")
+```
+
+```{r}
+job_words |> glimpse()
+```
+
+
+```{r}
+
+job_words <- postings_clean |> 
+  select(description, industry = industry_simple) |> 
+  unnest_tokens(word, description) |> 
+  anti_join(stop_words, by = "word") |> 
+  add_count(word, industry) |>
+  distinct(word, industry, n) |> 
+  bind_tf_idf(word, industry, n)
+
+job_words |>
+  filter(industry != "Recruiting") |> 
+  filter(word %out% c(
+    "experience", "team", "project", 
+    "business", "required", "job", 
+    "skills", "time", "position", 
+    "company", "ability", "services", 
+    "including", "management", "employment", 
+    "staff", "employees", "employee", 
+    "requirements", "opportunity", "de", "role", 
+    "employer"
+  )) |> 
+  arrange(desc(n)) |> 
+  group_by(industry) |> 
+  slice(1:15) |> 
+  ggplot(aes(x = n,
+             y = reorder_within(word, n, industry))) + 
+  geom_col() + 
+  scale_y_reordered() +
+  facet_wrap(~ industry, scales = "free")
+
+ggsave("./plots/facet_industry.png", height = 10, width = 10, units = "in")
+
+
+```
+
+Term frequency is the relative frequency of a term within a document (in this case, an entire industry is treated as a document). 
+
+
+```{r fig.height=10}
+job_words |> 
+  filter(industry != "Recruiting") |> 
+  filter(word %in% c(
+    "benefits", "data", "sales", 
+    "service", "media", "support", 
+    "team", "research", "pay"
+  )) |> 
+  arrange(desc(tf)) |> 
+  ggplot(aes(x = tf, 
+             y = reorder_within(industry, tf, n))) + 
+  geom_col() + 
+  scale_y_reordered() + 
+  facet_wrap(~ word, scales = "free")
+```
+
+<br>
+
+No more mad men, advertising is now more software engineering than it is Mad Men
